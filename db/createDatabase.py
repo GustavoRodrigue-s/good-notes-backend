@@ -18,4 +18,4 @@ try:
    cursor.close()
    connectionDatabase.close()
 except sqlite3.Error as e:
-   print(e, 'deu barba')
+   print(e)
