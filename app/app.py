@@ -2,7 +2,6 @@ class App:
    def __init__(self):
       self.name = "Good Notes"
 
-
    def checkRegistrationErrors(user, usersDatabase):
       wrongInputs = []
 
@@ -26,7 +25,6 @@ class App:
       if user.password[0] and user.password[1] and user.password[0] != user.password[1]:
          wrongInputs.append({'input': 'inputs-passwords', "reason": "differents passwords"})
 
-
       if wrongInputs != []: raise Exception(wrongInputs)
 
    def checkLoginErrors(user, userDatabase):
@@ -43,7 +41,7 @@ class App:
 
       if user.email and user.password:
          if not userDatabase or user.password != userDatabase[2]:
+            print(not userDatabase, user.password, userDatabase[2])
             wrongInputs.append({'input': 'some', "reason": "wrong credentials"})
-
 
       if wrongInputs != []: raise Exception(wrongInputs)

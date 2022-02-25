@@ -9,7 +9,7 @@ def addNewUser(user):
 
    functionToExecute = [
       'INSERT INTO users (username, email, password, id, apiKey) values(?, ?, ?, ?, ?)', 
-      (f"{user.username}", f"{user.email}", f"{user.password}", f"{userId}", f"{apiKey}")
+      (f"{user.username}", f"{user.email}", f"{user.password[0]}", f"{userId}", f"{apiKey}")
    ]
 
    connectionDB(functionToExecute, {
