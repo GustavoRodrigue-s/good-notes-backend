@@ -1,0 +1,2 @@
+ACCESS_TOKEN_KEY = "dh1S342ygh372xyb3WuyiqgdiHfHYIzgGDgiafas"
+REFRESH_TOKEN_KEY = "mas0-fwsmf9swjnmf30fs0mfj0anmf3nfluan2d9"

@@ -1,0 +1,4 @@
+./Backend/Pipfile
+./Backend/Pipfile.lock
+./api/__pycache__
+./Backend/services/tokenKey
