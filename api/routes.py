@@ -4,7 +4,7 @@ import os, sys
 
 sys.dont_write_bytecode = True
 
-sys.path.insert(1, '../')
+sys.path.insert(1, './')
 from db.createNewUser.newUser import addNewUser
 from app.models.User import User
 

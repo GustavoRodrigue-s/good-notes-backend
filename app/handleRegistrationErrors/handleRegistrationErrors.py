@@ -4,8 +4,6 @@ sys.path.insert(1, '../')
 from db.connection import connectionDB
 from app.app import App
 
-from app.models.User import User
-
 def handleRegistrationErrors(user):
 
    functionToExecuteEmail = f'select * from users where email = "{user.email}"'

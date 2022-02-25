@@ -11,8 +11,6 @@ cursor.execute('''create table users (
    apiKey text
 )''')
 
-print('criou o barato')
-
 connectionDatabase.commit()
 cursor.close()
 connectionDatabase.close()
