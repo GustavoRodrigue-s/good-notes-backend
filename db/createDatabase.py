@@ -12,6 +12,8 @@ try:
       apiKey text
    )''')
 
+   print('criou o barato')
+
    connectionDatabase.commit()
    cursor.close()
    connectionDatabase.close()
