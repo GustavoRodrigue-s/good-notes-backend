@@ -41,7 +41,6 @@ class App:
 
       if user.email and user.password:
          if not userDatabase or user.password != userDatabase[2]:
-            print(not userDatabase, user.password, userDatabase[2])
             wrongInputs.append({'input': 'some', "reason": "wrong credentials"})
 
       if wrongInputs != []: raise Exception(wrongInputs)
