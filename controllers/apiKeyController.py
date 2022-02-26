@@ -36,7 +36,7 @@ def apiKey_required(f):
          userApiKey = request.args.get('key')
 
          if userApiKey == '' or userApiKey == None:
-            raise Exception('no api key')
+            return jsonify({ 'state': 'unauthorized', 'reason': 'no api key' }, 403)
 
          userId = userApiKey.split('-')[1]
 
