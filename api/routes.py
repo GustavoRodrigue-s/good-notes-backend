@@ -18,6 +18,7 @@ from controllers.sessionController import createSessionHandler, deleteSessionHan
 from services.authenticate import jwt_required
 from controllers.apiKeyController import apiKey_required
 
+
 createDb()
 
 # API config 
