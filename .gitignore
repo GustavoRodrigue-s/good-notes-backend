@@ -2,4 +2,4 @@ Pipfile
 Pipfile.lock
 api/__pycache__
 services/tokenKey.py
-db/users.db
+db/*

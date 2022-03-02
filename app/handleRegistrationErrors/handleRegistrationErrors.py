@@ -1,7 +1,7 @@
 import sys
 
 sys.path.insert(1, './')
-from db.connection import connectionDB
+from app.connection import connectionDB
 from app.app import App
 
 def handleRegistrationErrors(user):

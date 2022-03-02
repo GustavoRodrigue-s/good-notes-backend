@@ -5,14 +5,14 @@ import os, sys
 sys.dont_write_bytecode = True
 
 sys.path.insert(1, './')
-from db.createDatabase import createDb
-from db.createNewUser.newUser import addNewUser
+from app.createDatabase import createDb
+from app.createNewUser.newUser import addNewUser
 from app.models.User import User
 
 from app.handleLoginErrors.handleLoginErrors import handleLoginErrors
 from app.handleRegistrationErrors.handleRegistrationErrors import handleRegistrationErrors 
 
-from db.getUserData.getData import getUserDatas
+from app.getUserData.getData import getUserDatas
 from controllers.sessionController import createSessionHandler, deleteSessionHandler
 
 from services.authenticate import jwt_required

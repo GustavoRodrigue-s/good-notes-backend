@@ -1,7 +1,7 @@
 from functools import wraps
 from random import sample
 
-from db.connection import connectionDB
+from app.connection import connectionDB
 from flask import request, jsonify
 
 def createApiKeyHandler(userId):

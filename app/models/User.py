@@ -1,4 +1,4 @@
-from db.connection import connectionDB
+from app.connection import connectionDB
 from random import sample
 
 class User:
