@@ -5,6 +5,7 @@ import os, sys
 sys.dont_write_bytecode = True
 
 sys.path.insert(1, './')
+from db.createDatabase import createDb
 from db.createNewUser.newUser import addNewUser
 from app.models.User import User
 
@@ -17,6 +18,8 @@ from controllers.sessionController import createSessionHandler, deleteSessionHan
 from services.authenticate import jwt_required
 from controllers.apiKeyController import apiKey_required
 
+
+createDb()
 
 # API config 
 app = Flask(__name__)

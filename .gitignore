@@ -1,4 +1,5 @@
-./Backend/Pipfile
-./Backend/Pipfile.lock
-./api/__pycache__
-./Backend/services/tokenKey
+Pipfile
+Pipfile.lock
+api/__pycache__
+services/tokenKey.py
+db/users.db

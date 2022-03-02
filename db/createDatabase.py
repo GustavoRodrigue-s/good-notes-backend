@@ -1,16 +1,21 @@
 import sqlite3
 
-connectionDatabase = sqlite3.connect('users.db')
-cursor = connectionDatabase.cursor()
+def createDb():
+   connectionDatabase = sqlite3.connect('db/users.db')
 
-cursor.execute('''create table users (
-   username text,
-   email text,
-   password text,
-   id text,
-   apiKey text
-)''')
+   cursor = connectionDatabase.cursor()
 
-connectionDatabase.commit()
-cursor.close()
-connectionDatabase.close()
+   try:
+      cursor.execute('''create table users (
+         username text,
+         email text,
+         password text,
+         id text,
+         apiKey text
+      )''')
+
+      connectionDatabase.commit()
+      cursor.close()
+      connectionDatabase.close()
+   except:
+      pass
