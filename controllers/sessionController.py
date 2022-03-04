@@ -13,10 +13,16 @@ sessionIdBlackList = []
 # inicia uma sessão
 def createSessionHandler(user, keepConnected):
    
+   print('vai entrar na cond id in blackList')
+
    if user.id in sessionIdBlackList:
       sessionIdBlackList.remove(user.id)
 
+   print('vai chamar o getApiKey')
+
    apiKey = getApiKeyHandler(user.id)
+
+   print('Vai chamar o generate token')
 
    accessToken = generateToken(user.id, os.environ.get('ACCESS_TOKEN_KEY'), 5)
 
