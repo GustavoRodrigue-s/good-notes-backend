@@ -4,10 +4,12 @@ from flask import request, jsonify
 from controllers.sessionController import restoreSessionHandler, sessionIdBlackList
 from controllers.apiKeyController import getApiKeyHandler
 
-from services.tokenKey import ACCESS_TOKEN_KEY
-
 from services.jwtToken import decodeToken
-import jwt
+import jwt, os
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def jwt_required(f):
    @wraps(f)
@@ -20,7 +22,7 @@ def jwt_required(f):
          return jsonify({ "state": "unauthorized", 'reason': 'no autorization token' }, 403)
 
       try:
-         decoded = decodeToken(accessToken, ACCESS_TOKEN_KEY)
+         decoded = decodeToken(accessToken, os.environ.get('ACCESS_TOKEN_KEY'))
          userId = decoded['id']
 
          if userId in sessionIdBlackList:

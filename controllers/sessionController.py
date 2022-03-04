@@ -1,9 +1,12 @@
 from services.jwtToken import generateToken, decodeToken
 
-import jwt
+from dotenv import load_dotenv
 
-from services.tokenKey import ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY
+import jwt, os
+
 from controllers.apiKeyController import getApiKeyHandler
+
+load_dotenv()
 
 sessionIdBlackList = []
 
@@ -15,14 +18,12 @@ def createSessionHandler(user, keepConnected):
 
    apiKey = getApiKeyHandler(user.id)
 
-   accessToken = generateToken(user.id, ACCESS_TOKEN_KEY, 5)
+   accessToken = generateToken(user.id, os.environ.get('ACCESS_TOKEN_KEY'), 5)
 
    if keepConnected: refreshTokenExpirationTime = 43200
    else: refreshTokenExpirationTime = 1440
 
-   print(refreshTokenExpirationTime)
-
-   refreshToken = generateToken(user.id, REFRESH_TOKEN_KEY, refreshTokenExpirationTime)
+   refreshToken = generateToken(user.id, os.environ.get('REFRESH_TOKEN_KEY'), refreshTokenExpirationTime)
 
    return { 'accessToken': accessToken, 'refreshToken': refreshToken  }, apiKey
 
@@ -30,13 +31,13 @@ def createSessionHandler(user, keepConnected):
 # cria um novo accessToken
 def restoreSessionHandler(refreshToken):
    try:
-      decoded = decodeToken(refreshToken, REFRESH_TOKEN_KEY)
+      decoded = decodeToken(refreshToken, os.environ.get('REFRESH_TOKEN_KEY'))
       userId = decoded['id']
 
       if userId in sessionIdBlackList:
          raise Exception('the session is not valid')
 
-      newAccessToken = generateToken(userId, ACCESS_TOKEN_KEY, 5)
+      newAccessToken = generateToken(userId, os.environ.get('ACCESS_TOKEN_KEY'), 5)
 
       return newAccessToken
 
