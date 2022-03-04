@@ -37,6 +37,8 @@ def routeLogin():
 
       handleLoginErrors(user)
 
+      print('vai chamar o createSessionHandler!')
+
       sessionData = createSessionHandler(user, requestData['keepConnected'])
 
       return jsonify(
