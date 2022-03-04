@@ -1,4 +1,5 @@
 import jwt
+
 from datetime import datetime, timedelta
 
 def generateToken(id, SECRET_KEY, time):
@@ -11,7 +12,7 @@ def generateToken(id, SECRET_KEY, time):
 
 
 def decodeToken(token, SECRET_KEY):
-
+   
    payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
 
    return payload

@@ -1,8 +1,6 @@
-from functools import wraps
 from random import sample
 
-from app.connection import connectionDB
-from flask import request, jsonify
+from db.connection import connectionDB
 
 def createApiKeyHandler(userId):
 
@@ -18,36 +16,11 @@ def createApiKeyHandler(userId):
 def getApiKeyHandler(userId):
 
    try:
-      functionToExecute = f'SELECT * from users where id = "{userId}"'
+      apiKey = connectionDB('getOneUser', {
+         'item': 'apiKey',
+         'condition': f"id = '{userId}'"
+      })[0]
 
-      apiKey = connectionDB(functionToExecute, { 'toAddUser': False, 'getAllUsers': False })
-
-      return apiKey[4]
+      return apiKey
    except:
       raise Exception('the api key is wrong')
-
-   
-# Decorator.
-def apiKey_required(f):
-   @wraps(f)
-   def wrapper(*args, **kwargs):
-
-      try:
-         userApiKey = request.args.get('key')
-
-         if userApiKey == '' or userApiKey == None:
-            return jsonify({ 'state': 'unauthorized', 'reason': 'no api key' }, 403)
-
-         userId = userApiKey.split('-')[1]
-
-         apiKeyOfThisUser = getApiKeyHandler(userId)
-
-         if userApiKey != apiKeyOfThisUser:
-            return jsonify({ 'state': "unauthorized", 'reason': 'the api key is wrong' }, 401)
-            
-      except:
-         return jsonify({ 'state': "unauthorized" }, 403)
-
-      return f(*args, *kwargs)
-
-   return wrapper

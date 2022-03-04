@@ -5,20 +5,18 @@ import os, sys
 sys.dont_write_bytecode = True
 
 sys.path.insert(1, './')
-from app.createDatabase import createDb
-from app.createNewUser.newUser import addNewUser
+from db.createNewUser.newUser import addNewUser
 from app.models.User import User
+
+from db.connection import connectionDB
 
 from app.handleLoginErrors.handleLoginErrors import handleLoginErrors
 from app.handleRegistrationErrors.handleRegistrationErrors import handleRegistrationErrors 
 
-from app.getUserData.getData import getUserDatas
+from db.getUserData.getData import getUserDatas
 from controllers.sessionController import createSessionHandler, deleteSessionHandler
 
-from services.authenticate import jwt_required
-from controllers.apiKeyController import apiKey_required
-
-createDb()
+from decorators import jwt_required, apiKey_required
 
 # API config 
 app = Flask(__name__)
@@ -26,17 +24,20 @@ cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 
+# If not exists, create new table
+connectionDB('createTable', None)
+
 #Routes
 @app.route('/login', methods=['POST'])
 def routeLogin():
-   userCredentials = json.loads(request.data)
+   requestData = json.loads(request.data)
 
    try:
-      user = User(userCredentials)
+      user = User(requestData)
 
       handleLoginErrors(user)
 
-      sessionData = createSessionHandler(user)
+      sessionData = createSessionHandler(user, requestData['keepConnected'])
 
       return jsonify(
          {
@@ -52,16 +53,16 @@ def routeLogin():
 
 @app.route('/register', methods=['POST'])
 def routeRegister():
-   userCredentials = json.loads(request.data)
+   requestData = json.loads(request.data)
 
    try:
-      user = User(userCredentials)
+      user = User(requestData)
       
       handleRegistrationErrors(user)
 
       addNewUser(user)
 
-      sessionData = createSessionHandler(user)
+      sessionData = createSessionHandler(user, requestData['keepConnected'])
 
       return jsonify(
          {
@@ -84,7 +85,7 @@ def routeGetData(userId):
       userCredentials = getUserDatas(userId)
 
       return jsonify(
-         { 'username': userCredentials[0], 'email': userCredentials[1] }, 200
+         { 'username': userCredentials[1], 'email': userCredentials[2] }, 200
       )
    except:
       return jsonify({ "state": "unauthorized" }, 401)

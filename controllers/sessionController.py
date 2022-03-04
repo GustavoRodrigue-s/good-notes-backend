@@ -1,5 +1,4 @@
-from flask import jsonify
-from services.token import generateToken, decodeToken
+from services.jwtToken import generateToken, decodeToken
 
 import jwt
 
@@ -9,24 +8,27 @@ from controllers.apiKeyController import getApiKeyHandler
 sessionIdBlackList = []
 
 # inicia uma sessão
-def createSessionHandler(user):
+def createSessionHandler(user, keepConnected):
+   
+   if user.id in sessionIdBlackList:
+      sessionIdBlackList.remove(user.id)
 
-   userId = user.getId()
+   apiKey = getApiKeyHandler(user.id)
 
-   if userId in sessionIdBlackList:
-      sessionIdBlackList.remove(userId)
+   accessToken = generateToken(user.id, ACCESS_TOKEN_KEY, 5)
 
-   apiKey = getApiKeyHandler(userId)
+   if keepConnected: refreshTokenExpirationTime = 43200
+   else: refreshTokenExpirationTime = 1440
 
-   accessToken = generateToken(userId, ACCESS_TOKEN_KEY, 5)
-   refreshToken = generateToken(userId, REFRESH_TOKEN_KEY, 10)
+   print(refreshTokenExpirationTime)
+
+   refreshToken = generateToken(user.id, REFRESH_TOKEN_KEY, refreshTokenExpirationTime)
 
    return { 'accessToken': accessToken, 'refreshToken': refreshToken  }, apiKey
 
    
 # cria um novo accessToken
 def restoreSessionHandler(refreshToken):
-
    try:
       decoded = decodeToken(refreshToken, REFRESH_TOKEN_KEY)
       userId = decoded['id']
@@ -48,5 +50,4 @@ def restoreSessionHandler(refreshToken):
 
 # invalida o id do usuário
 def deleteSessionHandler(userId):
-   
    sessionIdBlackList.append(userId)

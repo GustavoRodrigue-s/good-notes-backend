@@ -1,13 +1,13 @@
 from functools import wraps
 from flask import request, jsonify
 
-import jwt
-
 from controllers.sessionController import restoreSessionHandler, sessionIdBlackList
+from controllers.apiKeyController import getApiKeyHandler
 
-from services.token import decodeToken
 from services.tokenKey import ACCESS_TOKEN_KEY
 
+from services.jwtToken import decodeToken
+import jwt
 
 def jwt_required(f):
    @wraps(f)
@@ -50,5 +50,30 @@ def jwt_required(f):
 
 
       return f(userId = userId, *args, *kwargs)
+
+   return wrapper
+
+
+def apiKey_required(f):
+   @wraps(f)
+   def wrapper(*args, **kwargs):
+
+      try:
+         userApiKey = request.args.get('key')
+
+         if userApiKey == '' or userApiKey == None:
+            return jsonify({ 'state': 'unauthorized', 'reason': 'no api key' }, 403)
+
+         userId = userApiKey.split('-')[1]
+
+         apiKeyOfThisUser = getApiKeyHandler(userId)
+
+         if userApiKey != apiKeyOfThisUser:
+            return jsonify({ 'state': "unauthorized", 'reason': 'the api key is wrong' }, 401)
+            
+      except:
+         return jsonify({ 'state': "unauthorized" }, 403)
+
+      return f(*args, *kwargs)
 
    return wrapper

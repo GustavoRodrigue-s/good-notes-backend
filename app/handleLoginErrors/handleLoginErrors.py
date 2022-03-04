@@ -1,13 +1,16 @@
 import sys
 
 sys.path.insert(1, './')
-from app.connection import connectionDB
-from app.app import App
+from db.connection import connectionDB
+from app.models.App import App
 
 def handleLoginErrors(user):
     
-   functionToExecute = f'SELECT * from users WHERE email = "{user.email}" OR username = "{user.email}"'
-
-   userDatabase = connectionDB(functionToExecute, { 'toAddUser': False, 'getAllUsers': False })
+   userDatabase = connectionDB('getOneUser', {
+      'item': '*',
+      'condition': f"email = '{user.email}' OR username = '{user.email}'"
+   })
 
    App.checkLoginErrors(user, userDatabase)
+
+   user.id = userDatabase[0]

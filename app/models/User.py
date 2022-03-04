@@ -1,4 +1,4 @@
-from app.connection import connectionDB
+from db.connection import connectionDB
 from random import sample
 
 class User:
@@ -14,29 +14,23 @@ class User:
    def generateId(self):
       letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-      functionToExecute = "SELECT * FROM users"
-      allUsersOfDB = connectionDB(functionToExecute, { 'toAddUser': False, 'getAllUsers': True })
-
       while True:
          randomId = ''.join(sample(letters, 5))
 
-         repeatedId = False
+         userOfdb = connectionDB('getOneUser', {'item': '*', 'condition': f"id = '{randomId}'"})
 
-         for userId in allUsersOfDB:
-            if userId[3] == randomId:
-               repeatedId = True
-                  
-         if repeatedId == False:
+         if userOfdb == None:
             break                
+
+      self.id = randomId
 
       return randomId
 
    def getId(self):
-      functionToExecute = f'select * from users where email = "{self.email}" OR username = "{self.email}"'
+      userId = connectionDB('getOneUser', {
+         'item': 'id',
+         'condition': f"email = '{self.email}' OR username = '{self.email}'"
+      })
 
-      userDatabase = connectionDB(functionToExecute, { 'toAddUser': False, 'getAllUsers': False })
-
-      id = userDatabase[3]
-
-      return id
+      return userId[0]
 
