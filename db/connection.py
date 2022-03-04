@@ -1,14 +1,16 @@
 import psycopg2
+
 from app.models.DbActions import DbActions
+import os
 
 def connectionDB(action, data):
    try:
       dbConnection = psycopg2.connect(
-         host = 'ec2-3-232-22-121.compute-1.amazonaws.com',
-         dbname = 'd5pgvpckltfutt',
-         user = 'nhbwthpxduwbgk',
-         password = '6d80cc40b58a27349796b638a004c182fca40212ed615fa9be9e00e24ce99cc2',
-         port = 5432
+         host = os.environ.get('DATABASE_HOST'),
+         dbname = os.environ.get('DATABASE_NAME'),
+         user = os.environ.get('DATABASE_USER'),
+         password = os.environ.get('DATABASE_PASSWORD'),
+         port = os.environ.get('DATABASE_PORT')
       )
 
       cursor = dbConnection.cursor()
