@@ -37,7 +37,7 @@ def routeLogin():
 
       handleLoginErrors(user)
 
-      print('vai chamar o createSessionHandler!')
+      print('vai chamar o createSessionHandler!', requestData)
 
       sessionData = createSessionHandler(user, requestData['keepConnected'])
 
