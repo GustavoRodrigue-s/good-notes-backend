@@ -25,7 +25,7 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 
 
 # If not exists, create new table
-connectionDB('createTable', None)
+# connectionDB('createTable', None)
 
 #Routes
 @app.route('/login', methods=['POST'])
