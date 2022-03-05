@@ -13,16 +13,15 @@ sessionIdBlackList = []
 # inicia uma sessão
 def createSessionHandler(user, keepConnected):
    
+   print('O momento...')
+   print(keepConnected)
+
    if user.id in sessionIdBlackList:
       sessionIdBlackList.remove(user.id)
 
    apiKey = getApiKeyHandler(user.id)
 
-   print('Vai chamar o generate token')
-
    accessToken = generateToken(user.id, os.environ.get('ACCESS_TOKEN_KEY'), 5)
-
-   print(keepConnected)
 
    if keepConnected == True: refreshTokenExpirationTime = 43200
    else: refreshTokenExpirationTime = 1440
