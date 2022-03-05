@@ -50,7 +50,7 @@ def routeLogin():
          }, 200
       )
    except Exception as e:
-      return jsonify({"errors": e, "state": "error"}, 401)
+      return jsonify({"errors": e.args[0], "state": "error"}, 401)
 
 
 @app.route('/register', methods=['POST'])
