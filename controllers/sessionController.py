@@ -6,7 +6,7 @@ import jwt, os
 
 from controllers.apiKeyController import getApiKeyHandler
 
-load_dotenv()
+# load_dotenv()
 
 sessionIdBlackList = []
 
@@ -18,10 +18,9 @@ def createSessionHandler(user, keepConnected):
 
    apiKey = getApiKeyHandler(user.id)
 
-   accessToken = generateToken(user.id, os.environ.get('ACCESS_TOKEN_KEY'), 5)
+   print(user.id, os.environ.get('ACCESS_TOKEN_KEY'))
 
-   print('O momento...')
-   print(keepConnected)
+   accessToken = generateToken(user.id, os.environ.get('ACCESS_TOKEN_KEY'), 5)
 
    if keepConnected == True: refreshTokenExpirationTime = 43200
    else: refreshTokenExpirationTime = 1440
