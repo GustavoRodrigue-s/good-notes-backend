@@ -4,7 +4,7 @@ class DbActions:
 
    def createTable(self, none):
       self.cursor.execute('''CREATE TABLE IF NOT EXISTS users(
-         id          PRIMARY KEY VARCHAR(5) NOT NULL,
+         id          VARCHAR(5) PRIMARY KEY NOT NULL,
          username    VARCHAR(255) NOT NULL,
          email       VARCHAR(255) NOT NULL,
          password    VARCHAR(50)  NOT NULL,
