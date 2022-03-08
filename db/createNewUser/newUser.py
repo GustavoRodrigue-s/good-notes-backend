@@ -1,9 +1,13 @@
 from db.connection import connectionDB
 from controllers.apiKeyController import createApiKeyHandler
 
+from datetime import datetime
+
 def addNewUser(user):
 
-   user.generateId()
+   user.generateId() 
+
+   currentDate = datetime.today().strftime('%Y-%m-%d %H:%M')
 
    apiKey = createApiKeyHandler(user.id)
 
@@ -12,5 +16,6 @@ def addNewUser(user):
       'username': user.username,
       'email': user.email,
       'password': user.password[0],
-      'apiKey': apiKey
+      'apiKey': apiKey,
+      'currentDate': currentDate
    })

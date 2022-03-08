@@ -34,8 +34,10 @@ def connectionDB(action, data):
 
       return responseData
 
-   except:
+   except Exception as e:
       cursor.close()
       dbConnection.close()
 
-      raise Exception('This option is not exists.')
+      print(e)
+
+      raise Exception({'reason': 'This option is not exists.'})

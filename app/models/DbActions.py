@@ -8,20 +8,18 @@ class DbActions:
          username    VARCHAR(255) NOT NULL,
          email       VARCHAR(255) NOT NULL,
          password    VARCHAR(50)  NOT NULL,
-         apiKey      VARCHAR(21)  NOT NULL
+         apiKey      VARCHAR(21)  NOT NULL,
+         date        VARCHAR(19)  NOT NULL
       ) ''')
    
    def insertUser(self, data):
-      self.cursor.execute(f'''INSERT INTO users(id, username, email, password, apiKey) VALUES(
-         '{data['id']}',
-         '{data['username']}',
-         '{data['email']}',
-         '{data['password']}',
-         '{data['apiKey']}'
-      )''')
+      self.cursor.execute(
+         "INSERT INTO users(id, username, email, password, apiKey, date) VALUES(%s,%s,%s,%s,%s,%s)",
+         (data['id'], data['username'], data['email'], data['password'], data['apiKey'], data['currentDate'])
+      )
 
    def getOneUser(self, data):
-      self.cursor.execute(f'''SELECT {data['item']} FROM users WHERE {data['condition']} ''')
+      self.cursor.execute(f'''SELECT {data['item']} FROM users WHERE {data['condition']}''', data['datas'])
       response = self.cursor.fetchone()
 
       return response
@@ -32,6 +30,7 @@ class DbActions:
 
       return response
 
+   # Make treatment of sql injection
    def updateUser(self, data):
       self.cursor.execute(
          f'''UPDATE users SET {data['column']} = '{data['newValue']}' WHERE id = '{data['id']}'

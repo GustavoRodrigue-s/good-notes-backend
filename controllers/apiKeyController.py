@@ -18,7 +18,8 @@ def getApiKeyHandler(userId):
    try:
       apiKey = connectionDB('getOneUser', {
          'item': 'apiKey',
-         'condition': f"id = '{userId}'"
+         'condition': "id = %s",
+         'datas': (userId,)
       })[0]
 
       return apiKey

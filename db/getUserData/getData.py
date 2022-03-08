@@ -4,7 +4,8 @@ def getUserDatas(userId):
 
    userCredentials = connectionDB('getOneUser', {
       'item': '*',
-      'condition': f"id = '{userId}'" 
+      'condition': "id = %s",
+      'datas': (userId, )
    })
 
    return userCredentials

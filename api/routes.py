@@ -48,7 +48,9 @@ def routeLogin():
          }, 200
       )
    except Exception as e:
-      return jsonify({"errors": e.args[0], "state": "error"}, 401)
+      respData = [e.args[0]] if type(e.args[0]) != list else e.args[0]
+
+      return jsonify({"errors": respData, "state": "error"}, 401)
 
 
 @app.route('/register', methods=['POST'])
@@ -73,7 +75,9 @@ def routeRegister():
          }, 200
       )
    except Exception as e:
-      return jsonify({"errors": e.args[0], "state": "error"}, 401)
+      respData = [e.args[0]] if type(e.args[0]) != list else e.args[0]
+
+      return jsonify({"errors": respData, "state": "error"}, 401)
 
 
 # get user credentials

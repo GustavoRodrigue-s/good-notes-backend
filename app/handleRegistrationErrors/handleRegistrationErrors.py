@@ -6,8 +6,16 @@ from app.models.App import App
 
 def handleRegistrationErrors(user):
 
-   userDatabaseWithEmail = connectionDB('getOneUser', {'item': '*', 'condition': f"email = '{user.email}'"})
-   userDatabaseWithUsername = connectionDB('getOneUser', {'item': '*', 'condition': f"username = '{user.username}'"})
+   userDatabaseWithEmail = connectionDB('getOneUser', {
+      'item': '*',
+      'condition': "email = %s",
+      'datas': (user.email, )
+   })
+   userDatabaseWithUsername = connectionDB('getOneUser', {
+      'item': '*',
+      'condition': "username = %s",
+      'datas': (user.username, )
+   })
 
    App.checkRegistrationErrors(user, {
       "userWithEmail": userDatabaseWithEmail,

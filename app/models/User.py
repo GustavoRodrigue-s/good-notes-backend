@@ -17,7 +17,11 @@ class User:
       while True:
          randomId = ''.join(sample(letters, 5))
 
-         userOfdb = connectionDB('getOneUser', {'item': '*', 'condition': f"id = '{randomId}'"})
+         userOfdb = connectionDB('getOneUser', {
+            'item': '*',
+            'condition': "id = %s",
+            'datas': (randomId,)
+         })
 
          if userOfdb == None:
             break                
@@ -29,7 +33,8 @@ class User:
    def getId(self):
       userId = connectionDB('getOneUser', {
          'item': 'id',
-         'condition': f"email = '{self.email}' OR username = '{self.email}'"
+         'condition': "email = %s OR username = %s",
+         'datas': (self.email, self.email)
       })
 
       return userId[0]
