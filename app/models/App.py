@@ -44,3 +44,15 @@ class App:
             wrongInputs.append({'input': 'some', "reason": "wrong credentials"})
 
       if wrongInputs != []: raise Exception(wrongInputs)
+
+   @staticmethod
+   def checkNewCredentials(hasUsername, hasEmail):
+      wrongValues = []
+
+      if hasEmail:
+         wrongValues.append({'input': 'input-email', 'reason': 'email already exists'})
+
+      if hasUsername:
+         wrongValues.append({'input': 'input-username', 'reason': 'username already exists'})
+
+      raise Exception(wrongValues)

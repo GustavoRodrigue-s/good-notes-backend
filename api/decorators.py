@@ -51,7 +51,7 @@ def jwt_required(f):
          return jsonify({ 'state': 'unauthorized', 'reason': f'{e}' }, 401)
 
 
-      return f(userId = userId, *args, *kwargs)
+      return f(*args, *kwargs)
 
    return wrapper
 
@@ -76,6 +76,6 @@ def apiKey_required(f):
       except:
          return jsonify({ 'state': "unauthorized" }, 403)
 
-      return f(*args, *kwargs)
+      return f(userId, *args, *kwargs)
 
    return wrapper

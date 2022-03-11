@@ -5,6 +5,10 @@ from dotenv import load_dotenv
 import jwt, os
 
 from controllers.apiKeyController import getApiKeyHandler
+from app.updateUser.update import updateUser
+
+from app.models.User import User
+from app.models.App import App
 
 load_dotenv()
 
@@ -49,6 +53,22 @@ def restoreSessionHandler(refreshToken):
       raise Exception(e)
 
 
+def getSessionCredentialsHandler(userId):
+   userCredentials = User.getUserCredentials(userId)
+
+   return userCredentials
+
+
+def updateSessionCredentialsHandler(userId, newDatas):
+   newUserCredentials = updateUser(userId, newDatas)
+
+   return { 'email': newUserCredentials[0], 'username': newUserCredentials[1] }
+
+
 # invalida o id do usuário
-def deleteSessionHandler(userId):
+def disableSessionHandler(userId):
    sessionIdBlackList.append(userId)
+
+
+def deleteSessionHandler(userId):
+   User.deleteAccount(userId)

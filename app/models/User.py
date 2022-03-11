@@ -39,3 +39,24 @@ class User:
 
       return userId[0]
 
+   @staticmethod
+   def getUserCredentials(userId):
+      response = connectionDB('getOneUser', {
+         'item': '*',
+         'condition': "id = %s",
+         'datas': (userId, )
+      })
+
+      return response
+
+   @staticmethod
+   def updateUserCredentials(userId, newDatas):
+      newDatas['id'] = userId
+
+      response = connectionDB('updateUser', newDatas)
+
+      return response
+
+   @staticmethod
+   def deleteAccount(userId):
+      connectionDB('deleteUser', {"datas": (userId, )})

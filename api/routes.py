@@ -13,8 +13,7 @@ from db.connection import connectionDB
 from app.handleLoginErrors.handleLoginErrors import handleLoginErrors
 from app.handleRegistrationErrors.handleRegistrationErrors import handleRegistrationErrors 
 
-from db.getUserData.getData import getUserDatas
-from controllers.sessionController import createSessionHandler, deleteSessionHandler
+from controllers import sessionController
 
 from decorators import jwt_required, apiKey_required
 
@@ -37,7 +36,7 @@ def routeLogin():
 
       handleLoginErrors(user)
 
-      sessionData = createSessionHandler(user, requestData['keepConnected'])
+      sessionData = sessionController.createSessionHandler(user, requestData['keepConnected'])
 
       return jsonify(
          {
@@ -64,7 +63,7 @@ def routeRegister():
 
       addNewUser(user)
 
-      sessionData = createSessionHandler(user, requestData['keepConnected'])
+      sessionData = sessionController.createSessionHandler(user, requestData['keepConnected'])
 
       return jsonify(
          {
@@ -86,7 +85,7 @@ def routeRegister():
 @jwt_required
 def routeGetData(userId):
    try:
-      userCredentials = getUserDatas(userId)
+      userCredentials = sessionController.getSessionCredentialsHandler(userId)
 
       return jsonify(
          { 'username': userCredentials[1], 'email': userCredentials[2] }, 200
@@ -108,10 +107,41 @@ def routeTokenRequired(userId):
 @apiKey_required
 @jwt_required
 def routeLogoutUser(userId):
-   deleteSessionHandler(userId)
+   sessionController.disableSessionHandler(userId)
 
    return jsonify({ 'state': 'success' }, 200)
 
+
+@app.route('/updateUser', methods=['POST'])
+@apiKey_required
+@jwt_required
+def routeUpdateCredentials(userId):
+
+   requestData = json.loads(request.data)
+
+   try: 
+      response = sessionController.updateSessionCredentialsHandler(userId, requestData)
+
+      return jsonify({
+         'state': 'success',
+         'newDatas': response
+      }, 200)
+
+   except Exception as e:
+      respData = [e.args[0]] if type(e.args[0]) != list else e.args[0]
+
+      return jsonify({'state': 'error', 'reason': respData}, 403)
+
+
+@app.route('/deleteUser', methods=['GET'])
+@apiKey_required
+def routeDeleteAccount(userId):
+   try:
+      sessionController.deleteSessionHandler(userId)
+
+      return jsonify({'state': 'success'}, 200)
+   except Exception as e:
+      return jsonify({'state': 'error', 'reason': f'{e}'}, 401)
 
 
 # Port config

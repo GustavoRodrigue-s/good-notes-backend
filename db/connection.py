@@ -17,13 +17,13 @@ def connectionDB(action, data):
 
       databaseActions = DbActions(cursor)
 
-      chooseAction = { 
+      chooseAction = {
          'createTable': databaseActions.createTable,
          'insertUser': databaseActions.insertUser,
          'getOneUser': databaseActions.getOneUser,
          'getAllUsers': databaseActions.getAllUsers,
          'updateUser': databaseActions.updateUser,
-         'deleteUser': databaseActions.deleteUser    
+         'deleteUser': databaseActions.deleteUser
       }
 
       responseData = chooseAction[action](data)
@@ -38,6 +38,4 @@ def connectionDB(action, data):
       cursor.close()
       dbConnection.close()
 
-      print(e)
-
-      raise Exception({'reason': 'This option is not exists.'})
+      raise Exception('This option is not exists.')

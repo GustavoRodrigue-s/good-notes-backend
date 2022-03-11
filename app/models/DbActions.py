@@ -1,3 +1,4 @@
+from psycopg2 import errors 
 class DbActions:
    def __init__(self, cursor):
       self.cursor = cursor
@@ -19,26 +20,43 @@ class DbActions:
       )
 
    def getOneUser(self, data):
-      self.cursor.execute(f'''SELECT {data['item']} FROM users WHERE {data['condition']}''', data['datas'])
+      self.cursor.execute(
+         f'''SELECT {data['item']} FROM users WHERE {data['condition']}''',
+         data['datas']
+      )
+
       response = self.cursor.fetchone()
 
       return response
 
    def getAllUsers(self, data):
       self.cursor.execute(f"SELECT {data['item']} FROM users")
+
       response = self.cursor.fetchall()
 
       return response
 
    # Make treatment of sql injection
    def updateUser(self, data):
+
       self.cursor.execute(
-         f'''UPDATE users SET {data['column']} = '{data['newValue']}' WHERE id = '{data['id']}'
-         RETURNING * '''
+         '''
+            UPDATE users SET email = %s, username = %s WHERE
+            id = %s
+            AND
+            NOT EXISTS(SELECT * FROM users WHERE email = %s AND id <> %s OR username = %s AND id <> %s)
+            RETURNING email, username
+         ''',
+         (data['email'], data['username'], data['id'], data['email'], data['id'], data['username'], data['id'])
       )
+
       response = self.cursor.fetchone()
+
+      print(response)
 
       return response
    
    def deleteUser(self, data):
-      self.cursor.execute(f"DELETE FROM users WHERE id = '{data['id']}'")
+      self.cursor.execute('''DELETE FROM users WHERE id = %s''', data['datas'])
+
+      return 'deleted'
