@@ -2,6 +2,7 @@ class App:
    def __init__(self):
       self.name = "Good Notes"
 
+   @staticmethod
    def checkRegistrationErrors(user, usersDatabase):
       wrongInputs = []
 
@@ -16,18 +17,21 @@ class App:
          if input["value"] == '':
             wrongInputs.append({'input': input['name'], "reason": "empty input"})
 
-      if usersDatabase['userWithUsername']: 
+      if usersDatabase['hasUserWithSomeUsername']: 
          wrongInputs.append({'input': 'input-username', "reason": "username already exists"})
 
-      if usersDatabase['userWithEmail']:
+      if usersDatabase['hasUserWithSomeEmail']:
          wrongInputs.append({'input': 'input-email', "reason": "email already exists"})
 
       if user.password[0] and user.password[1] and user.password[0] != user.password[1]:
          wrongInputs.append({'input': 'inputs-passwords', "reason": "differents passwords"})
+         
 
       if wrongInputs != []: raise Exception(wrongInputs)
 
+   @staticmethod
    def checkLoginErrors(user, userDatabase):
+
       wrongInputs = []
 
       inputsArray = [
@@ -43,16 +47,24 @@ class App:
          if not userDatabase:
             wrongInputs.append({'input': 'some', "reason": "wrong credentials"})
 
+
       if wrongInputs != []: raise Exception(wrongInputs)
 
    @staticmethod
-   def checkNewCredentials(hasUsername, hasEmail):
+   def checkNewCredentials(user, hasUserWithSomeCredentials):
       wrongValues = []
 
-      if hasEmail:
+      if user['email'] == '':
+         wrongValues.append({'input': 'input-email', 'reason': 'empty input'})
+
+      if user['username'] == '':
+         wrongValues.append({'input': 'input-username', 'reason': 'empty input'})
+
+      if hasUserWithSomeCredentials['hasUserWithSomeEmail']:
          wrongValues.append({'input': 'input-email', 'reason': 'email already exists'})
 
-      if hasUsername:
+      if hasUserWithSomeCredentials['hasUserWithSomeUsername']:
          wrongValues.append({'input': 'input-username', 'reason': 'username already exists'})
 
-      raise Exception(wrongValues)
+
+      if wrongValues != []: raise Exception(wrongValues)

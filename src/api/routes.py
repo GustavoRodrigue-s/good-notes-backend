@@ -4,18 +4,15 @@ import os, sys
 
 sys.dont_write_bytecode = True
 
-sys.path.insert(1, './')
-from db.createNewUser.newUser import addNewUser
-from app.models.User import User
+sys.path.insert(1, './src')
 
-from db.connection import connectionDB
-
-from app.handleLoginErrors.handleLoginErrors import handleLoginErrors
-from app.handleRegistrationErrors.handleRegistrationErrors import handleRegistrationErrors 
+from models.db.connection import connectionDB
 
 from controllers import sessionController
+from controllers import formsController
 
 from decorators import jwt_required, apiKey_required
+
 
 # API config 
 app = Flask(__name__)
@@ -32,11 +29,9 @@ def routeLogin():
    requestData = json.loads(request.data)
 
    try:
-      user = User(requestData)
+      formsController.loginFormHandler(requestData)
 
-      handleLoginErrors(user)
-
-      sessionData = sessionController.createSessionHandler(user, requestData['keepConnected'])
+      sessionData = sessionController.createSessionHandler(requestData)
 
       return jsonify(
          {
@@ -57,13 +52,9 @@ def routeRegister():
    requestData = json.loads(request.data)
 
    try:
-      user = User(requestData)
-      
-      handleRegistrationErrors(user)
+      formsController.registerFormHandler(requestData)
 
-      addNewUser(user)
-
-      sessionData = sessionController.createSessionHandler(user, requestData['keepConnected'])
+      sessionData = sessionController.createSessionHandler(requestData)
 
       return jsonify(
          {
@@ -88,7 +79,7 @@ def routeGetData(userId):
       userCredentials = sessionController.getSessionCredentialsHandler(userId)
 
       return jsonify(
-         { 'username': userCredentials[1], 'email': userCredentials[2] }, 200
+         { 'state': 'success' ,'username': userCredentials[1], 'email': userCredentials[2] }, 200
       )
    except:
       return jsonify({ "state": "unauthorized" }, 401)

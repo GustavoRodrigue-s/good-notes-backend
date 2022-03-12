@@ -1,6 +1,5 @@
 import psycopg2
-
-from app.models.DbActions import DbActions
+from models.entities.DbActions import DbActions
 import os
 
 def connectionDB(action, data):
@@ -23,7 +22,8 @@ def connectionDB(action, data):
          'getOneUser': databaseActions.getOneUser,
          'getAllUsers': databaseActions.getAllUsers,
          'updateUser': databaseActions.updateUser,
-         'deleteUser': databaseActions.deleteUser
+         'deleteUser': databaseActions.deleteUser,
+         'getUserWithSomeCredentials': databaseActions.getUserWithSomeCredentials
       }
 
       responseData = chooseAction[action](data)

@@ -1,4 +1,4 @@
-from db.connection import connectionDB
+from models.db.connection import connectionDB
 from random import sample
 
 class User:
@@ -11,7 +11,8 @@ class User:
       self.email = user['email']
       self.password = user['password']
 
-   def generateId(self):
+   @staticmethod
+   def setNewIdForCurrentUser(currentUser):
       letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
       while True:
@@ -26,37 +27,37 @@ class User:
          if userOfdb == None:
             break                
 
-      self.id = randomId
+      currentUser.id = randomId
 
       return randomId
 
-   def getId(self):
-      userId = connectionDB('getOneUser', {
+   @staticmethod
+   def getCurrentUserId(currentUser):
+      currentId = connectionDB('getOneUser', {
          'item': 'id',
          'condition': "email = %s OR username = %s",
-         'datas': (self.email, self.email)
-      })
+         'datas': (currentUser.email, currentUser.email)
+      })[0]
 
-      return userId[0]
+      return currentId
 
    @staticmethod
-   def getUserCredentials(userId):
-      response = connectionDB('getOneUser', {
-         'item': '*',
+   def getApiKeyHandler(currentUserId):
+      
+      apiKey = connectionDB('getOneUser', {
+         'item': 'apiKey',
          'condition': "id = %s",
-         'datas': (userId, )
-      })
+         'datas': (currentUserId,)
+      })[0]
 
-      return response
-
-   @staticmethod
-   def updateUserCredentials(userId, newDatas):
-      newDatas['id'] = userId
-
-      response = connectionDB('updateUser', newDatas)
-
-      return response
+      return apiKey
 
    @staticmethod
-   def deleteAccount(userId):
-      connectionDB('deleteUser', {"datas": (userId, )})
+   def setNewApiKeyForCurrentUser(currentUserId):
+      letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+      randomKey = ''.join(sample(letters, 15))
+
+      apiKey = randomKey + "-" + currentUserId
+
+      return apiKey

@@ -2,9 +2,10 @@ from functools import wraps
 from flask import request, jsonify
 
 from controllers.sessionController import restoreSessionHandler, sessionIdBlackList
-from controllers.apiKeyController import getApiKeyHandler
 
-from services.jwtToken import decodeToken
+from models.entities.User import User
+
+from services.jwtService import decodeToken
 import jwt, os
 
 from dotenv import load_dotenv
@@ -68,7 +69,7 @@ def apiKey_required(f):
 
          userId = userApiKey.split('-')[1]
 
-         apiKeyOfThisUser = getApiKeyHandler(userId)
+         apiKeyOfThisUser = User.getApiKeyHandler(userId)
 
          if userApiKey != apiKeyOfThisUser:
             return jsonify({ 'state': "unauthorized", 'reason': 'the api key is wrong' }, 401)

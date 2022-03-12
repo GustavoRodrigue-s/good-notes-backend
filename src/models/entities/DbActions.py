@@ -1,4 +1,3 @@
-from psycopg2 import errors 
 class DbActions:
    def __init__(self, cursor):
       self.cursor = cursor
@@ -36,23 +35,16 @@ class DbActions:
 
       return response
 
-   # Make treatment of sql injection
    def updateUser(self, data):
-
       self.cursor.execute(
          '''
-            UPDATE users SET email = %s, username = %s WHERE
-            id = %s
-            AND
-            NOT EXISTS(SELECT * FROM users WHERE email = %s AND id <> %s OR username = %s AND id <> %s)
+            UPDATE users SET email = %s, username = %s WHERE id = %s
             RETURNING email, username
          ''',
-         (data['email'], data['username'], data['id'], data['email'], data['id'], data['username'], data['id'])
+         (data['email'], data['username'], data['id'])
       )
 
       response = self.cursor.fetchone()
-
-      print(response)
 
       return response
    
@@ -60,3 +52,20 @@ class DbActions:
       self.cursor.execute('''DELETE FROM users WHERE id = %s''', data['datas'])
 
       return 'deleted'
+
+   def getUserWithSomeCredentials(self, data):
+      self.cursor.execute(
+         f'''SELECT * FROM users WHERE {data['condition1']}''',
+         data['datas1']
+      )
+
+      response1 = self.cursor.fetchone()
+
+      self.cursor.execute(
+         f'''SELECT * FROM users WHERE {data['condition2']}''',
+         data['datas2']
+      )
+
+      response2 = self.cursor.fetchone()
+
+      return {"hasUserWithSomeEmail": response1, "hasUserWithSomeUsername": response2}
