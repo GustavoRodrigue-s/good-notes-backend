@@ -13,7 +13,7 @@ def createNewUserInDbHandler(user):
 
    apiKey = User.setNewApiKeyForCurrentUser(user.id)
 
-   connectionDB('insertUser', {
+   connectionDB('addUser', {
       'id': user.id,
       'username': user.username,
       'email': user.email,
@@ -48,8 +48,6 @@ def registerFormHandler(requestData):
       'condition2': "username = %s",
       'datas2': (user.username, )
    })
-
-   print(hasUserWithSomeCredentials, user)
 
    App.checkRegistrationErrors(user, hasUserWithSomeCredentials)
 

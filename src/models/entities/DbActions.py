@@ -3,13 +3,23 @@ class DbActions:
       self.cursor = cursor
 
    def createTable(self, none):
-      self.cursor.execute('''CREATE TABLE IF NOT EXISTS users(
-         id          VARCHAR(5) PRIMARY KEY NOT NULL,
+      self.cursor.execute('''
+      CREATE TABLE IF NOT EXISTS users(
+         id          VARCHAR(5) NOT NULL,
          username    VARCHAR(255) NOT NULL,
          email       VARCHAR(255) NOT NULL,
          password    VARCHAR(50)  NOT NULL,
          apiKey      VARCHAR(21)  NOT NULL,
-         date        VARCHAR(19)  NOT NULL
+         date        VARCHAR(19),
+         PRIMARY KEY (id)
+      );
+
+      CREATE TABLE IF NOT EXISTS categories(
+         id          SERIAL NOT NULL,
+         user_id     VARCHAR(5) NOT NULL,
+         category_name    VARCHAR(255) NOT NULL,
+         PRIMARY KEY (id),
+         FOREIGN KEY (user_id) REFERENCES users(id)
       ) ''')
    
    def insertUser(self, data):
@@ -25,13 +35,6 @@ class DbActions:
       )
 
       response = self.cursor.fetchone()
-
-      return response
-
-   def getAllUsers(self, data):
-      self.cursor.execute(f"SELECT {data['item']} FROM users")
-
-      response = self.cursor.fetchall()
 
       return response
 
@@ -69,3 +72,35 @@ class DbActions:
       response2 = self.cursor.fetchone()
 
       return {"hasUserWithSomeEmail": response1, "hasUserWithSomeUsername": response2}
+
+   def insertCategory(self, data):
+      self.cursor.execute(
+         "INSERT INTO categories(id ,user_id, category_name) VALUES(DEFAULT ,%s, %s) RETURNING id",
+         (data['userId'], data['categoryName'])
+      )
+
+      categoryId = self.cursor.fetchone()
+
+      return categoryId[0]
+
+   def deleteCategory(self, data):
+      self.cursor.execute(
+         'DELETE FROM categories WHERE id = %s AND user_id = %s',
+         (data['categoryId'], data['userId'])
+      )
+
+   def updateCategory(self, data):
+      self.cursor.execute(
+         'UPDATE categories SET category_name = %s WHERE id = %s AND user_id = %s',
+         (data['newCategoryName'], data['categoryId'], data['userId'])
+      )
+
+   def getCategories(self, data):
+      self.cursor.execute(
+         'SELECT id, category_name FROM categories WHERE user_id = %s',
+         (data['userId'], )
+      )
+
+      allCategories = self.cursor.fetchall()
+
+      return allCategories

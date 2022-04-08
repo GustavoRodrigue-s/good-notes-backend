@@ -10,6 +10,7 @@ from models.db.connection import connectionDB
 
 from controllers import sessionController
 from controllers import formsController
+from controllers import categoryController
 
 from decorators import jwt_required, apiKey_required
 
@@ -133,6 +134,66 @@ def routeDeleteAccount(userId):
       return jsonify({'state': 'success'}, 200)
    except Exception as e:
       return jsonify({'state': 'error', 'reason': f'{e}'}, 401)
+
+# ----- Endpoints Categorys ------
+
+@app.route('/addCategory', methods=['POST'])
+@apiKey_required
+@jwt_required
+def routeAddCategory(userId):
+   requestData = json.loads(request.data)
+
+   categoryName = requestData['categoryName']
+
+   try:
+      categoryId = categoryController.createCategoryHandler(userId, categoryName)
+
+      return jsonify({'state': 'success', 'categoryId': categoryId}, 200)
+   except Exception as e:
+      return jsonify({'state': 'error', 'reason': f'{e}'}, 401)
+
+
+@app.route('/deleteCategory', methods=['POST'])
+@apiKey_required
+@jwt_required
+def routeDeleteCategory(userId):
+   requestData = json.loads(request.data)
+
+   categoryId = requestData['categoryId']
+
+   try:
+      categoryController.deleteCategoryHandler(userId, categoryId)
+
+      return jsonify({'state': 'success'}, 200)
+   except Exception as e:
+      return jsonify({'state': 'error', 'reason': f'{e}'}, 401)
+
+
+@app.route('/updateCategory', methods=['POST'])
+@apiKey_required
+@jwt_required
+def routeUpdateCategory(userId):
+   requestData = json.loads(request.data)
+
+   try:
+      categoryController.updateCategoryHandler(userId, requestData)
+
+      return jsonify({'state': 'success'}, 200)
+   except Exception as e:
+      return jsonify({'state': 'error', 'reason': f'{e}'}, 401)
+
+
+@app.route('/getCategories', methods=['GET'])
+@apiKey_required
+@jwt_required
+def routeGetCategories(userId):
+   try:
+      allCategories =  categoryController.getCategoriesHandler(userId)
+
+      return jsonify({ 'state': 'success', 'categories': allCategories }, 200)
+   except Exception as e:
+      return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
+   
 
 
 # Port config

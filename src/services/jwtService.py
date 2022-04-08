@@ -13,9 +13,9 @@ def generateToken(id, SECRET_KEY, time):
 
 def decodeToken(token, SECRET_KEY):
 
-      payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+   payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
 
-      return payload
+   return payload
       
 
 def decodeRefreshToken(refreshToken, SECRET_KEY):

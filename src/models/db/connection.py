@@ -18,12 +18,15 @@ def connectionDB(action, data):
 
       chooseAction = {
          'createTable': databaseActions.createTable,
-         'insertUser': databaseActions.insertUser,
+         'addUser': databaseActions.insertUser,
          'getOneUser': databaseActions.getOneUser,
-         'getAllUsers': databaseActions.getAllUsers,
          'updateUser': databaseActions.updateUser,
          'deleteUser': databaseActions.deleteUser,
-         'getUserWithSomeCredentials': databaseActions.getUserWithSomeCredentials
+         'getUserWithSomeCredentials': databaseActions.getUserWithSomeCredentials,
+         'addCategory': databaseActions.insertCategory,
+         'deleteCategory': databaseActions.deleteCategory,
+         'updateCategory': databaseActions.updateCategory,
+         'getCategories': databaseActions.getCategories
       }
 
       responseData = chooseAction[action](data)
@@ -37,5 +40,7 @@ def connectionDB(action, data):
    except Exception as e:
       cursor.close()
       dbConnection.close()
+
+      print(e)
 
       raise Exception('This option is not exists.')
