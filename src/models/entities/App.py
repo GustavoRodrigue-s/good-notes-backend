@@ -44,7 +44,7 @@ class App:
             wrongInputs.append({'input': input['name'], "reason": "empty input"})
 
       if user.email and user.password:
-         if not userDatabase:
+         if not userDatabase or userDatabase[3] != user.password:
             wrongInputs.append({'input': 'some', "reason": "wrong credentials"})
 
 

@@ -1,6 +1,12 @@
 from models.db.connection import connectionDB
 from random import sample
 
+from dotenv import load_dotenv
+import os
+
+from cryptocode import encrypt, decrypt
+
+load_dotenv()
 class User:
    def __init__(self, user):
       try:
@@ -61,3 +67,15 @@ class User:
       apiKey = randomKey + "-" + currentUserId
 
       return apiKey
+
+   @staticmethod
+   def hashPassword(currentPassword):
+      hashPassword = encrypt(currentPassword, os.environ.get('HASH_PASSWORD_KEY'))
+
+      return hashPassword
+
+   @staticmethod
+   def decryptHashPassword(currentHashPassword):
+      decodePassword = decrypt(currentHashPassword, os.environ.get('HASH_PASSWORD_KEY'))
+
+      return decodePassword

@@ -8,7 +8,7 @@ class DbActions:
          id          VARCHAR(5) NOT NULL,
          username    VARCHAR(255) NOT NULL,
          email       VARCHAR(255) NOT NULL,
-         password    VARCHAR(50)  NOT NULL,
+         password    VARCHAR(255)  NOT NULL,
          apiKey      VARCHAR(21)  NOT NULL,
          date        VARCHAR(19),
          PRIMARY KEY (id)
@@ -20,7 +20,18 @@ class DbActions:
          category_name    VARCHAR(255) NOT NULL,
          PRIMARY KEY (id),
          FOREIGN KEY (user_id) REFERENCES users(id)
-      ) ''')
+      );
+      
+      CREATE TABLE IF NOT EXISTS notes(
+         id           SERIAL NOT NULL,
+         category_id  INTEGER NOT NULL,
+         user_id      VARCHAR(5) NOT NULL,
+         note_title   VARCHAR(255) NOT NULL,
+         note_content VARCHAR(255) NOT NULL,
+         PRIMARY KEY  (id),
+         FOREIGN KEY  (category_id) REFERENCES categories(id),
+         FOREIGN KEY  (user_id) REFERENCES users(id)
+      )''')
    
    def insertUser(self, data):
       self.cursor.execute(
@@ -104,3 +115,25 @@ class DbActions:
       allCategories = self.cursor.fetchall()
 
       return allCategories
+
+   def getNotes(self, data):
+      self.cursor.execute(
+         'SELECT id, note_title, note_content FROM notes WHERE category_id = %s AND user_id = %s',
+         (data['categoryId'], data['userId']) 
+      )
+
+      allNotes = self.cursor.fetchall()
+
+      return allNotes
+
+   def insertNote(self, data):
+      self.cursor.execute(
+         '''
+         INSERT INTO notes(id, category_id, user_id, note_title, note_content) 
+         VALUES(DEFAULT, %s, %s, 'Nova Nota', 'O conteúdo da nova nota está aqui...') RETURNING id''',
+         (data['categoryId'], data['userId'])
+      )
+
+      noteId = self.cursor.fetchone()
+
+      return noteId[0]

@@ -11,6 +11,7 @@ from models.db.connection import connectionDB
 from controllers import sessionController
 from controllers import formsController
 from controllers import categoryController
+from controllers.UseNotesController import UseNotesController
 
 from decorators import jwt_required, apiKey_required
 
@@ -71,8 +72,7 @@ def routeRegister():
       return jsonify({"errors": respData, "state": "error"}, 401)
 
 
-# get user credentials
-@app.route('/profile', methods=['GET'])
+@app.route('/userCredentials', methods=['GET'])
 @apiKey_required
 @jwt_required
 def routeGetData(userId):
@@ -86,8 +86,7 @@ def routeGetData(userId):
       return jsonify({ "state": "unauthorized" }, 401)
 
 
-# check tokens
-@app.route('/required', methods=['GET'])
+@app.route('/auth', methods=['GET'])
 @apiKey_required
 @jwt_required
 def routeTokenRequired(userId):
@@ -143,14 +142,14 @@ def routeDeleteAccount(userId):
 def routeAddCategory(userId):
    requestData = json.loads(request.data)
 
-   categoryName = requestData['categoryName']
-
    try:
+      categoryName = requestData['categoryName']
+
       categoryId = categoryController.createCategoryHandler(userId, categoryName)
 
       return jsonify({'state': 'success', 'categoryId': categoryId}, 200)
    except Exception as e:
-      return jsonify({'state': 'error', 'reason': f'{e}'}, 401)
+      return jsonify({'state': 'error', 'reason': 'no category name'}, 401)
 
 
 @app.route('/deleteCategory', methods=['POST'])
@@ -159,14 +158,14 @@ def routeAddCategory(userId):
 def routeDeleteCategory(userId):
    requestData = json.loads(request.data)
 
-   categoryId = requestData['categoryId']
-
    try:
+      categoryId = requestData['categoryId']
+
       categoryController.deleteCategoryHandler(userId, categoryId)
 
       return jsonify({'state': 'success'}, 200)
    except Exception as e:
-      return jsonify({'state': 'error', 'reason': f'{e}'}, 401)
+      return jsonify({'state': 'error', 'reason': 'no category id'}, 401)
 
 
 @app.route('/updateCategory', methods=['POST'])
@@ -180,7 +179,7 @@ def routeUpdateCategory(userId):
 
       return jsonify({'state': 'success'}, 200)
    except Exception as e:
-      return jsonify({'state': 'error', 'reason': f'{e}'}, 401)
+      return jsonify({'state': 'error', 'reason': 'no category id or new category name'}, 401)
 
 
 @app.route('/getCategories', methods=['GET'])
@@ -194,7 +193,38 @@ def routeGetCategories(userId):
    except Exception as e:
       return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
    
+# ----- Endpoints Notes ------
 
+@app.route('/getNotes', methods=['POST'])
+@apiKey_required
+@jwt_required
+def routeGetNotes(userId):
+   requestData = json.loads(request.data)
+
+   try:
+      categoryId = requestData['categoryId']
+
+      allNotes = UseNotesController.getNotesHandler(userId, categoryId)
+
+      return jsonify({ 'state': 'success', 'notes': allNotes }, 200)
+   except Exception as e:
+      return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
+
+
+@app.route('/addNote', methods=['POST'])
+@apiKey_required
+@jwt_required
+def routeAddNote(userId):
+   requestData = json.loads(request.data)
+
+   try:
+      currentCategoryId = requestData['categoryId']
+
+      noteId = UseNotesController.createNoteHandler(userId, currentCategoryId)
+
+      return jsonify({ 'state': 'success', 'noteId': noteId }, 200)
+   except Exception as e:
+      return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 
 # Port config
 def main():

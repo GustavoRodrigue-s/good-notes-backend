@@ -12,9 +12,8 @@ load_dotenv()
 
 sessionIdBlackList = []
 
-
 def createSessionHandler(requestData):
-
+   
    currentUser = User(requestData)
    currentUser.id = User.getCurrentUserId(currentUser)
    
@@ -32,7 +31,6 @@ def createSessionHandler(requestData):
 
    return { 'accessToken': accessToken, 'refreshToken': refreshToken  }, apiKey
    
-   
 def restoreSessionHandler(refreshToken):
    
    userId = jwtService.decodeRefreshToken(refreshToken, os.environ.get('REFRESH_TOKEN_KEY'))
@@ -44,7 +42,6 @@ def restoreSessionHandler(refreshToken):
 
    return newAccessToken
 
-
 def getSessionCredentialsHandler(userId):
 
    userCredentials = connectionDB('getOneUser', {
@@ -54,7 +51,6 @@ def getSessionCredentialsHandler(userId):
    })
 
    return userCredentials
-
 
 def updateSessionCredentialsHandler(userId, newCredentials):
 
@@ -73,10 +69,8 @@ def updateSessionCredentialsHandler(userId, newCredentials):
 
    return { 'email': newUserCredentials[0], 'username': newUserCredentials[1] }
 
-
 def disableSessionHandler(userId):
    sessionIdBlackList.append(userId)
-
 
 def deleteSessionHandler(userId):
    connectionDB('deleteUser', {"datas": (userId, )})

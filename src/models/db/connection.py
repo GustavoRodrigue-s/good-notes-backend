@@ -26,7 +26,9 @@ def connectionDB(action, data):
          'addCategory': databaseActions.insertCategory,
          'deleteCategory': databaseActions.deleteCategory,
          'updateCategory': databaseActions.updateCategory,
-         'getCategories': databaseActions.getCategories
+         'getCategories': databaseActions.getCategories,
+         'getNotes': databaseActions.getNotes,
+         'insertNote': databaseActions.insertNote
       }
 
       responseData = chooseAction[action](data)
