@@ -15,7 +15,6 @@ from controllers.UseNotesController import UseNotesController
 
 from decorators import jwt_required, apiKey_required
 
-
 # API config 
 app = Flask(__name__)
 cors = CORS(app)
@@ -220,9 +219,26 @@ def routeAddNote(userId):
    try:
       currentCategoryId = requestData['categoryId']
 
-      noteId = UseNotesController.createNoteHandler(userId, currentCategoryId)
+      noteDatas = UseNotesController.createNoteHandler(userId, currentCategoryId)
 
-      return jsonify({ 'state': 'success', 'noteId': noteId }, 200)
+      return jsonify({ 'state': 'success', 'noteData': noteDatas }, 200)
+   except Exception as e:
+      return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
+
+
+@app.route('/deleteNote', methods=['POST'])
+@apiKey_required
+@jwt_required
+def routeDeleteNote(userId):
+   requestData = json.loads(request.data)
+
+   try:
+      noteId = requestData['noteId']
+      categoryId = requestData['categoryId']
+
+      UseNotesController.deleteNoteHandler(noteId, categoryId, userId)
+
+      return jsonify({ 'state': 'success' }, 200)
    except Exception as e:
       return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 

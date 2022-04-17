@@ -28,6 +28,8 @@ class DbActions:
          user_id      VARCHAR(5) NOT NULL,
          note_title   VARCHAR(255) NOT NULL,
          note_content VARCHAR(255) NOT NULL,
+         date_one     VARCHAR(40) NOT NULL,
+         date_two     VARCHAR(40) NOT NULL,
          PRIMARY KEY  (id),
          FOREIGN KEY  (category_id) REFERENCES categories(id),
          FOREIGN KEY  (user_id) REFERENCES users(id)
@@ -118,7 +120,11 @@ class DbActions:
 
    def getNotes(self, data):
       self.cursor.execute(
-         'SELECT id, note_title, note_content FROM notes WHERE category_id = %s AND user_id = %s',
+         '''
+            SELECT id, category_id, note_title, note_content, date_one, date_two 
+            FROM notes 
+            WHERE category_id = %s AND user_id = %s
+         ''',
          (data['categoryId'], data['userId']) 
       )
 
@@ -129,11 +135,18 @@ class DbActions:
    def insertNote(self, data):
       self.cursor.execute(
          '''
-         INSERT INTO notes(id, category_id, user_id, note_title, note_content) 
-         VALUES(DEFAULT, %s, %s, 'Nova Nota', 'O conteúdo da nova nota está aqui...') RETURNING id''',
-         (data['categoryId'], data['userId'])
+         INSERT INTO notes(id, category_id, user_id, note_title, note_content, date_one, date_two) 
+         VALUES(DEFAULT, %s, %s, 'Nova Nota', 'O conteúdo da nova nota está aqui...', %s, %s) 
+         RETURNING id, date_one, date_two''',
+         (data['categoryId'], data['userId'], data['dateOne'], data['dateTwo'])
       )
 
-      noteId = self.cursor.fetchone()
+      noteDatas = self.cursor.fetchone()
 
-      return noteId[0]
+      return noteDatas
+
+   def deleteCategory(self, data):
+      self.cursor.execute(
+         'DELETE FROM notes WHERE id = %s AND category_Id = %s AND user_id = %s',
+         (data['noteId'], data['categoryId'], data['userId'])
+      )
