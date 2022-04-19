@@ -242,6 +242,21 @@ def routeDeleteNote(userId):
    except Exception as e:
       return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 
+
+@app.route('/updateNote', methods=['POST'])
+@apiKey_required
+@jwt_required
+def routeUpdateNote(userId):
+   requestData = json.loads(request.data)
+
+   try:
+      lastModification = UseNotesController.updateNoteHandler(userId, requestData)
+
+      return jsonify({ 'state': 'success', 'lastModification': lastModification }, 200)
+   except Exception as e:
+      return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
+
+
 # Port config
 def main():
    port = int(os.environ.get("PORT", 5000))

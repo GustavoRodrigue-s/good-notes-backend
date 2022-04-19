@@ -55,3 +55,20 @@ class UseNotesController:
          'categoryId': categoryId,
          'userId': userId
       })
+
+   @staticmethod
+   def updateNoteHandler(userId, requestData):
+
+      locale.setlocale(locale.LC_ALL, 'pt_pt.UTF-8')
+      newUpdatedDate = datetime.today().strftime('%d/%m/%Y às %H:%M')
+
+      connectionDB('updateNote', {
+         'noteId': requestData['noteId'],
+         'categoryId': requestData['categoryId'],
+         'userId': userId,
+         'newTitle': requestData['newTitle'],
+         'newContent': requestData['newContent'],
+         'newDateUpdated': newUpdatedDate
+      })
+
+      return newUpdatedDate

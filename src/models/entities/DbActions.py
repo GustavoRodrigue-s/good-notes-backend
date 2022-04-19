@@ -26,8 +26,8 @@ class DbActions:
          id           SERIAL NOT NULL,
          category_id  INTEGER NOT NULL,
          user_id      VARCHAR(5) NOT NULL,
-         note_title   VARCHAR(255) NOT NULL,
-         note_content VARCHAR(255) NOT NULL,
+         note_title   VARCHAR(255),
+         note_content VARCHAR(255),
          date_one     VARCHAR(40) NOT NULL,
          date_two     VARCHAR(40) NOT NULL,
          PRIMARY KEY  (id),
@@ -124,6 +124,7 @@ class DbActions:
             SELECT id, category_id, note_title, note_content, date_one, date_two 
             FROM notes 
             WHERE category_id = %s AND user_id = %s
+            ORDER BY date_one DESC
          ''',
          (data['categoryId'], data['userId']) 
       )
@@ -149,4 +150,16 @@ class DbActions:
       self.cursor.execute(
          'DELETE FROM notes WHERE id = %s AND category_Id = %s AND user_id = %s',
          (data['noteId'], data['categoryId'], data['userId'])
+      )
+
+   def updateNote(self, data):
+      self.cursor.execute(
+         '''
+            UPDATE notes SET note_title = %s, note_content = %s, date_one = %s
+            WHERE id = %s AND category_id = %s AND user_id = %s
+         ''',
+         (
+            data['newTitle'], data['newContent'], data['newDateUpdated'], 
+            data['noteId'], data['categoryId'], data['userId']
+         )
       )
