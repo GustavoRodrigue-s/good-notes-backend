@@ -27,7 +27,7 @@ class DbActions:
          category_id  INTEGER NOT NULL,
          user_id      VARCHAR(5) NOT NULL,
          note_title   VARCHAR(255),
-         note_content VARCHAR(255),
+         note_content TEXT,
          date_one     VARCHAR(40) NOT NULL,
          date_two     VARCHAR(40) NOT NULL,
          PRIMARY KEY  (id),
