@@ -27,6 +27,7 @@ class DbActions:
          category_id  INTEGER NOT NULL,
          user_id      VARCHAR(5) NOT NULL,
          note_title   VARCHAR(255),
+         note_summary VARCHAR(255), 
          note_content TEXT,
          date_one     VARCHAR(40) NOT NULL,
          date_two     VARCHAR(40) NOT NULL,
@@ -121,7 +122,7 @@ class DbActions:
    def getNotes(self, data):
       self.cursor.execute(
          '''
-            SELECT id, category_id, note_title, note_content, date_one, date_two 
+            SELECT id, category_id, note_title, note_summary, note_content, date_one, date_two 
             FROM notes 
             WHERE category_id = %s AND user_id = %s
             ORDER BY date_one DESC
@@ -136,8 +137,8 @@ class DbActions:
    def insertNote(self, data):
       self.cursor.execute(
          '''
-         INSERT INTO notes(id, category_id, user_id, note_title, note_content, date_one, date_two) 
-         VALUES(DEFAULT, %s, %s, 'Nova Nota', 'O conteúdo da nova nota está aqui...', %s, %s) 
+         INSERT INTO notes(id, category_id, user_id, note_title, note_summary, note_content, date_one, date_two) 
+         VALUES(DEFAULT, %s, %s, 'Nova Nota', 'O resumo da nova nota está aqui...', 'O conteúdo da nova nota está aqui...', %s, %s) 
          RETURNING id, date_one, date_two''',
          (data['categoryId'], data['userId'], data['dateOne'], data['dateTwo'])
       )
@@ -155,11 +156,11 @@ class DbActions:
    def updateNote(self, data):
       self.cursor.execute(
          '''
-            UPDATE notes SET note_title = %s, note_content = %s, date_one = %s
+            UPDATE notes SET note_title = %s, note_summary = %s ,note_content = %s, date_one = %s
             WHERE id = %s AND category_id = %s AND user_id = %s
          ''',
          (
-            data['newTitle'], data['newContent'], data['newDateUpdated'], 
+            data['newTitle'], data['newSummary'], data['newContent'], data['newDateUpdated'], 
             data['noteId'], data['categoryId'], data['userId']
          )
       )

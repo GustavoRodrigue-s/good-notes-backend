@@ -16,9 +16,10 @@ class UseNotesController:
             'id': data[0],
             'categoryId': data[1],
             'title': data[2],
-            'content': data[3],
-            'dateOne': data[4],
-            'dateTwo': data[5]
+            'summary': data[3],
+            'content': data[4],
+            'dateOne': data[5],
+            'dateTwo': data[6]
          }
 
       allNotesFormated = list(map(noteFormated, allNotes))
@@ -68,6 +69,7 @@ class UseNotesController:
          'userId': userId,
          'newTitle': requestData['newTitle'],
          'newContent': requestData['newContent'],
+         'newSummary': requestData['newSummary'],
          'newDateUpdated': newUpdatedDate
       })
 
