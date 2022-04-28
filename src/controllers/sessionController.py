@@ -73,4 +73,6 @@ def disableSessionHandler(userId):
    sessionIdBlackList.append(userId)
 
 def deleteSessionHandler(userId):
-   connectionDB('deleteUser', {"datas": (userId, )})
+   connectionDB('deleteUser', {
+      'userId': userId
+   })

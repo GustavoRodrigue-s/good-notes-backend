@@ -4,6 +4,9 @@ class DbActions:
 
    def createTable(self, none):
       self.cursor.execute('''
+      SET lc_time to 'pt_BR.UTF-8';
+      SET TIMEZONE='America/Sao_Paulo';
+
       CREATE TABLE IF NOT EXISTS users(
          id          VARCHAR(5) NOT NULL,
          username    VARCHAR(255) NOT NULL,
@@ -29,8 +32,8 @@ class DbActions:
          note_title   VARCHAR(255),
          note_summary VARCHAR(255), 
          note_content TEXT,
-         date_one     VARCHAR(40) NOT NULL,
-         date_two     VARCHAR(40) NOT NULL,
+         date_created TIMESTAMPTZ DEFAULT NOW(),
+         last_modification TIMESTAMPTZ DEFAULT NOW(),
          PRIMARY KEY  (id),
          FOREIGN KEY  (category_id) REFERENCES categories(id),
          FOREIGN KEY  (user_id) REFERENCES users(id)
@@ -44,7 +47,9 @@ class DbActions:
 
    def getOneUser(self, data):
       self.cursor.execute(
-         f'''SELECT {data['item']} FROM users WHERE {data['condition']}''',
+         f'''
+            SELECT {data['item']} FROM users WHERE {data['condition']}
+         ''',
          data['datas']
       )
 
@@ -66,7 +71,14 @@ class DbActions:
       return response
    
    def deleteUser(self, data):
-      self.cursor.execute('''DELETE FROM users WHERE id = %s''', data['datas'])
+      self.cursor.execute(
+      '''
+         DELETE FROM notes WHERE user_id = %s;
+         DELETE FROM categories WHERE user_id = %s;
+         DELETE FROM users WHERE id = %s
+      ''', 
+         (data['userId'], data['userId'], data['userId'])
+      )
 
       return 'deleted'
 
@@ -99,8 +111,11 @@ class DbActions:
 
    def deleteCategory(self, data):
       self.cursor.execute(
-         'DELETE FROM categories WHERE id = %s AND user_id = %s',
-         (data['categoryId'], data['userId'])
+         '''
+            DELETE FROM notes WHERE category_id = %s AND user_id = %s;
+            DELETE FROM categories WHERE id = %s AND user_id = %s
+         ''',
+         (data['categoryId'], data['userId'], data['categoryId'], data['userId'])
       )
 
    def updateCategory(self, data):
@@ -111,7 +126,9 @@ class DbActions:
 
    def getCategories(self, data):
       self.cursor.execute(
-         'SELECT id, category_name FROM categories WHERE user_id = %s',
+         '''
+            SELECT id, category_name FROM categories WHERE user_id = %s
+         ''',
          (data['userId'], )
       )
 
@@ -122,10 +139,16 @@ class DbActions:
    def getNotes(self, data):
       self.cursor.execute(
          '''
-            SELECT id, category_id, note_title, note_summary, note_content, date_one, date_two 
+            SET lc_time to 'pt_BR.UTF-8';
+            SET TIMEZONE='America/Sao_Paulo';
+
+            SELECT 
+               id, category_id, note_title, note_summary, note_content,
+               TO_CHAR(date_created, 'dd TMMonth yyyy às TMHH24:MI'),
+               TO_CHAR(last_modification, 'dd/MM/yyyy às TMHH24:MI')
             FROM notes 
             WHERE category_id = %s AND user_id = %s
-            ORDER BY date_one DESC
+            ORDER BY last_modification DESC
          ''',
          (data['categoryId'], data['userId']) 
       )
@@ -137,17 +160,23 @@ class DbActions:
    def insertNote(self, data):
       self.cursor.execute(
          '''
-         INSERT INTO notes(id, category_id, user_id, note_title, note_summary, note_content, date_one, date_two) 
-         VALUES(DEFAULT, %s, %s, 'Nova Nota', 'O resumo da nova nota está aqui...', 'O conteúdo da nova nota está aqui...', %s, %s) 
-         RETURNING id, date_one, date_two''',
-         (data['categoryId'], data['userId'], data['dateOne'], data['dateTwo'])
+            SET lc_time to 'pt_BR.UTF-8';
+            SET TIMEZONE='America/Sao_Paulo';
+
+            INSERT INTO notes(id, category_id, user_id, note_title, note_summary, note_content) 
+            VALUES(DEFAULT, %s, %s, 'Nova Nota', 'O resumo da nova nota está aqui...', 'O conteúdo da nova nota está aqui...') 
+            RETURNING id, 
+               TO_CHAR(date_created, 'dd TMMonth yyyy às TMHH24:MI'),
+               TO_CHAR(last_modification, 'dd/MM/yyyy às TMHH24:MI')
+         ''',
+         (data['categoryId'], data['userId'])
       )
 
       noteDatas = self.cursor.fetchone()
 
       return noteDatas
 
-   def deleteCategory(self, data):
+   def deleteNote(self, data):
       self.cursor.execute(
          'DELETE FROM notes WHERE id = %s AND category_Id = %s AND user_id = %s',
          (data['noteId'], data['categoryId'], data['userId'])
@@ -156,11 +185,20 @@ class DbActions:
    def updateNote(self, data):
       self.cursor.execute(
          '''
-            UPDATE notes SET note_title = %s, note_summary = %s ,note_content = %s, date_one = %s
+            SET lc_time to 'pt_BR.UTF-8';
+            SET TIMEZONE='America/Sao_Paulo';
+
+            UPDATE notes 
+            SET note_title = %s, note_summary = %s, note_content = %s, last_modification = NOW()
             WHERE id = %s AND category_id = %s AND user_id = %s
+            RETURNING TO_CHAR(last_modification, 'dd/MM/yyyy às TMHH24:MI')
          ''',
          (
-            data['newTitle'], data['newSummary'], data['newContent'], data['newDateUpdated'], 
+            data['newTitle'], data['newSummary'], data['newContent'], 
             data['noteId'], data['categoryId'], data['userId']
          )
       )
+
+      lastModification = self.cursor.fetchone()
+
+      return lastModification

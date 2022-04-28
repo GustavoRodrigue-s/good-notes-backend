@@ -34,9 +34,10 @@ def loginFormHandler(requestData):
       'datas': (user.email, user.email)
    })
 
-   hasUserInDB = list(userDB)
+   hasUserInDB = list(userDB) if userDB else userDB
 
-   hasUserInDB[3] = User.decryptHashPassword(hasUserInDB[3])
+   if hasUserInDB:
+      hasUserInDB[3] = User.decryptHashPassword(hasUserInDB[3])
 
    App.checkLoginErrors(user, hasUserInDB)
 

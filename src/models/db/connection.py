@@ -29,7 +29,7 @@ def connectionDB(action, data):
          'getCategories': databaseActions.getCategories,
          'getNotes': databaseActions.getNotes,
          'insertNote': databaseActions.insertNote,
-         'deleteNote': databaseActions.deleteCategory,
+         'deleteNote': databaseActions.deleteNote,
          'updateNote': databaseActions.updateNote
       }
 
