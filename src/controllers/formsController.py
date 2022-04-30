@@ -3,13 +3,9 @@ from models.db.connection import connectionDB
 from models.entities.App import App
 from models.entities.User import User
 
-from datetime import datetime
-
 def createNewUserInDbHandler(user):
 
    User.setNewIdForCurrentUser(user)
-
-   currentDate = datetime.today().strftime('%Y-%m-%d %H:%M')
 
    apiKey = User.setNewApiKeyForCurrentUser(user.id)
 
@@ -20,8 +16,7 @@ def createNewUserInDbHandler(user):
       'username': user.username,
       'email': user.email,
       'password': user.password,
-      'apiKey': apiKey,
-      'currentDate': currentDate
+      'apiKey': apiKey
    })
 
 def loginFormHandler(requestData):

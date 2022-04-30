@@ -4,45 +4,47 @@ class DbActions:
 
    def createTable(self, none):
       self.cursor.execute('''
-      SET lc_time to 'pt_BR.UTF-8';
-      SET TIMEZONE='America/Sao_Paulo';
+         SET lc_time to 'pt_BR.UTF-8';
+         SET TIMEZONE='America/Sao_Paulo';
 
-      CREATE TABLE IF NOT EXISTS users(
-         id          VARCHAR(5) NOT NULL,
-         username    VARCHAR(255) NOT NULL,
-         email       VARCHAR(255) NOT NULL,
-         password    VARCHAR(255)  NOT NULL,
-         apiKey      VARCHAR(21)  NOT NULL,
-         date        VARCHAR(19),
-         PRIMARY KEY (id)
-      );
+         CREATE TABLE IF NOT EXISTS users(
+            id          VARCHAR(5) NOT NULL,
+            username    VARCHAR(255) NOT NULL,
+            email       VARCHAR(255) NOT NULL,
+            password    VARCHAR(255)  NOT NULL,
+            apiKey      VARCHAR(21)  NOT NULL,
+            datetime    TIMESTAMPTZ DEFAULT NOW(),
+            PRIMARY KEY (id)
+         );
 
-      CREATE TABLE IF NOT EXISTS categories(
-         id          SERIAL NOT NULL,
-         user_id     VARCHAR(5) NOT NULL,
-         category_name    VARCHAR(255) NOT NULL,
-         PRIMARY KEY (id),
-         FOREIGN KEY (user_id) REFERENCES users(id)
-      );
-      
-      CREATE TABLE IF NOT EXISTS notes(
-         id           SERIAL NOT NULL,
-         category_id  INTEGER NOT NULL,
-         user_id      VARCHAR(5) NOT NULL,
-         note_title   VARCHAR(255),
-         note_summary VARCHAR(255), 
-         note_content TEXT,
-         date_created TIMESTAMPTZ DEFAULT NOW(),
-         last_modification TIMESTAMPTZ DEFAULT NOW(),
-         PRIMARY KEY  (id),
-         FOREIGN KEY  (category_id) REFERENCES categories(id),
-         FOREIGN KEY  (user_id) REFERENCES users(id)
-      )''')
+         CREATE TABLE IF NOT EXISTS categories(
+            id          SERIAL NOT NULL,
+            user_id     VARCHAR(5) NOT NULL,
+            category_name    VARCHAR(255) NOT NULL,
+            datetime    TIMESTAMPTZ DEFAULT NOW(),
+            PRIMARY KEY (id),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+         );
+         
+         CREATE TABLE IF NOT EXISTS notes(
+            id           SERIAL NOT NULL,
+            category_id  INTEGER NOT NULL,
+            user_id      VARCHAR(5) NOT NULL,
+            note_title   VARCHAR(255),
+            note_summary VARCHAR(255), 
+            note_content TEXT,
+            date_created TIMESTAMPTZ DEFAULT NOW(),
+            last_modification TIMESTAMPTZ DEFAULT NOW(),
+            PRIMARY KEY  (id),
+            FOREIGN KEY  (category_id) REFERENCES categories(id),
+            FOREIGN KEY  (user_id) REFERENCES users(id)
+         )
+      ''')
    
    def insertUser(self, data):
       self.cursor.execute(
-         "INSERT INTO users(id, username, email, password, apiKey, date) VALUES(%s,%s,%s,%s,%s,%s)",
-         (data['id'], data['username'], data['email'], data['password'], data['apiKey'], data['currentDate'])
+         "INSERT INTO users(id, username, email, password, apiKey) VALUES(%s,%s,%s,%s,%s)",
+         (data['id'], data['username'], data['email'], data['password'], data['apiKey'])
       )
 
    def getOneUser(self, data):
@@ -128,6 +130,7 @@ class DbActions:
       self.cursor.execute(
          '''
             SELECT id, category_name FROM categories WHERE user_id = %s
+            ORDER BY datetime DESC
          ''',
          (data['userId'], )
       )
@@ -199,6 +202,6 @@ class DbActions:
          )
       )
 
-      lastModification = self.cursor.fetchone()
+      lastModification = self.cursor.fetchone()[0]
 
       return lastModification

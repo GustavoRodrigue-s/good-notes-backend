@@ -26,6 +26,6 @@ def updateCategoryHandler(userId, requestData):
 
 def getCategoriesHandler(userId):
 
-   allCurrentCategories = connectionDB('getCategories', {'userId': userId})
+   allCurrentCategories = connectionDB('getCategories', { 'userId': userId })
 
    return allCurrentCategories

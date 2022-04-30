@@ -29,7 +29,7 @@ def createSessionHandler(requestData):
 
    refreshToken = jwtService.generateToken(currentUser.id, os.environ.get('REFRESH_TOKEN_KEY'), refreshTokenExpirationTime)
 
-   return { 'accessToken': accessToken, 'refreshToken': refreshToken  }, apiKey
+   return { 'accessToken': accessToken, 'refreshToken': refreshToken, 'apiKey': apiKey  }
    
 def restoreSessionHandler(refreshToken):
    

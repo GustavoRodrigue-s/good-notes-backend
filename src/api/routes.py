@@ -38,8 +38,7 @@ def routeLogin():
          {
             "state": "success",
             "reason": "all right",
-            'apiKey': sessionData[1],
-            "userData": sessionData[0]
+            "userData": sessionData
          }, 200
       )
    except Exception as e:
@@ -61,8 +60,7 @@ def routeRegister():
          {
             "state": "success",
             "reason": "all right",
-            "apiKey": sessionData[1],
-            "userData": sessionData[0]
+            "userData": sessionData
          }, 200
       )
    except Exception as e:

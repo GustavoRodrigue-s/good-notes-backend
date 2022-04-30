@@ -51,12 +51,12 @@ class UseNotesController:
    def updateNoteHandler(userId, requestData):
 
       newLastModification = connectionDB('updateNote', {
-         'noteId': requestData['noteId'],
+         'noteId': requestData['id'],
          'categoryId': requestData['categoryId'],
          'userId': userId,
-         'newTitle': requestData['newTitle'],
-         'newContent': requestData['newContent'],
-         'newSummary': requestData['newSummary'],
+         'newTitle': requestData['title'],
+         'newContent': requestData['content'],
+         'newSummary': requestData['summary'],
       })
 
       return newLastModification
