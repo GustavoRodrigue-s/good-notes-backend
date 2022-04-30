@@ -1,4 +1,5 @@
 from models.db.connection import connectionDB
+from models.entities.App import App 
 
 class UseNotesController:
    @staticmethod
@@ -49,6 +50,8 @@ class UseNotesController:
 
    @staticmethod
    def updateNoteHandler(userId, requestData):
+
+      App.checkNoteErros(requestData)
 
       newLastModification = connectionDB('updateNote', {
          'noteId': requestData['id'],

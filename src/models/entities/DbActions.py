@@ -22,6 +22,7 @@ class DbActions:
             user_id     VARCHAR(5) NOT NULL,
             category_name    VARCHAR(255) NOT NULL,
             datetime    TIMESTAMPTZ DEFAULT NOW(),
+            last_update TIMESTAMPTZ DEFAULT NOW(),
             PRIMARY KEY (id),
             FOREIGN KEY (user_id) REFERENCES users(id)
          );
@@ -122,15 +123,20 @@ class DbActions:
 
    def updateCategory(self, data):
       self.cursor.execute(
-         'UPDATE categories SET category_name = %s WHERE id = %s AND user_id = %s',
+         '''
+            UPDATE categories SET category_name = %s , last_update = NOW()
+            WHERE id = %s AND user_id = %s
+         ''',
          (data['newCategoryName'], data['categoryId'], data['userId'])
       )
+
+      self.setLastCategoryUpdate(data)
 
    def getCategories(self, data):
       self.cursor.execute(
          '''
             SELECT id, category_name FROM categories WHERE user_id = %s
-            ORDER BY datetime DESC
+            ORDER BY last_update DESC
          ''',
          (data['userId'], )
       )
@@ -138,6 +144,15 @@ class DbActions:
       allCategories = self.cursor.fetchall()
 
       return allCategories
+
+   def setLastCategoryUpdate(self, data):
+      self.cursor.execute(
+         '''
+            UPDATE categories SET last_update = NOW()
+            WHERE id = %s AND user_id = %s
+         ''',
+         (data['categoryId'], data['userId'])
+      )
 
    def getNotes(self, data):
       self.cursor.execute(
@@ -177,6 +192,8 @@ class DbActions:
 
       noteDatas = self.cursor.fetchone()
 
+      self.setLastCategoryUpdate(data)
+
       return noteDatas
 
    def deleteNote(self, data):
@@ -184,6 +201,8 @@ class DbActions:
          'DELETE FROM notes WHERE id = %s AND category_Id = %s AND user_id = %s',
          (data['noteId'], data['categoryId'], data['userId'])
       )
+
+      self.setLastCategoryUpdate(data)
 
    def updateNote(self, data):
       self.cursor.execute(
@@ -203,5 +222,7 @@ class DbActions:
       )
 
       lastModification = self.cursor.fetchone()[0]
+
+      self.setLastCategoryUpdate(data)
 
       return lastModification

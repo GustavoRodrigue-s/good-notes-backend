@@ -52,6 +52,7 @@ class App:
 
    @staticmethod
    def checkNewCredentials(user, hasUserWithSomeCredentials):
+
       wrongValues = []
 
       if user['email'] == '':
@@ -68,3 +69,9 @@ class App:
 
 
       if wrongValues != []: raise Exception(wrongValues)
+
+   @staticmethod
+   def checkNoteErros(noteData):
+
+      if not noteData['title']:
+         raise Exception('The title must not be null')
