@@ -3,10 +3,10 @@ from services import jwtService
 from dotenv import load_dotenv
 import os
 
-from models.db.connection import connectionDB
+from database.connection import connectionDB
 
-from models.entities.User import User
-from models.entities.App import App
+from app.models.User import User
+from app.models.App import App
 
 load_dotenv()
 
@@ -63,7 +63,7 @@ def updateSessionCredentialsHandler(userId, newCredentials):
       'datas2': (newCredentials['username'], userId)
    })
 
-   App.checkNewCredentials(newCredentials, hasUserWithSomeCredentials)
+   App.checkProfileErrors(newCredentials, hasUserWithSomeCredentials)
 
    newUserCredentials = connectionDB('updateUser', newCredentials)
 

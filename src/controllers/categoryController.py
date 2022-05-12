@@ -1,4 +1,4 @@
-from models.db.connection import connectionDB 
+from database.connection import connectionDB 
 
 def createCategoryHandler(userId, categoryName):
 

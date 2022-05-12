@@ -3,7 +3,7 @@ from flask import request, jsonify
 
 from controllers.sessionController import restoreSessionHandler, sessionIdBlackList
 
-from models.entities.User import User
+from app.models.User import User
 
 from services.jwtService import decodeToken
 import jwt, os

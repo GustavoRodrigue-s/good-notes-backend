@@ -1,5 +1,5 @@
-from models.db.connection import connectionDB
-from models.entities.App import App 
+from database.connection import connectionDB
+from app.models.App import App 
 
 class UseNotesController:
    @staticmethod

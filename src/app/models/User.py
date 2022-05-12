@@ -1,4 +1,4 @@
-from models.db.connection import connectionDB
+from database.connection import connectionDB
 from random import sample
 
 from dotenv import load_dotenv

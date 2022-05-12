@@ -6,7 +6,7 @@ sys.dont_write_bytecode = True
 
 sys.path.insert(1, './src')
 
-from models.db.connection import connectionDB
+from database.connection import connectionDB
 
 from controllers import sessionController
 from controllers import formsController
@@ -69,20 +69,6 @@ def routeRegister():
       return jsonify({"errors": respData, "state": "error"}, 401)
 
 
-@app.route('/userCredentials', methods=['GET'])
-@apiKey_required
-@jwt_required
-def routeGetData(userId):
-   try:
-      userCredentials = sessionController.getSessionCredentialsHandler(userId)
-
-      return jsonify(
-         { 'state': 'success' ,'username': userCredentials[1], 'email': userCredentials[2] }, 200
-      )
-   except:
-      return jsonify({ "state": "unauthorized" }, 401)
-
-
 @app.route('/auth', methods=['GET'])
 @apiKey_required
 @jwt_required
@@ -100,7 +86,21 @@ def routeLogoutUser(userId):
    return jsonify({ 'state': 'success' }, 200)
 
 
-@app.route('/updateUser', methods=['POST'])
+@app.route('/getCredentials', methods=['GET'])
+@apiKey_required
+@jwt_required
+def routeGetData(userId):
+   try:
+      userCredentials = sessionController.getSessionCredentialsHandler(userId)
+
+      return jsonify(
+         { 'state': 'success' ,'username': userCredentials[1], 'email': userCredentials[2] }, 200
+      )
+   except:
+      return jsonify({ "state": "unauthorized" }, 401)
+
+
+@app.route('/updateCredentials', methods=['POST'])
 @apiKey_required
 @jwt_required
 def routeUpdateCredentials(userId):
@@ -121,7 +121,7 @@ def routeUpdateCredentials(userId):
       return jsonify({'state': 'error', 'reason': respData}, 403)
 
 
-@app.route('/deleteUser', methods=['GET'])
+@app.route('/deleteAccountap', methods=['GET'])
 @apiKey_required
 def routeDeleteAccount(userId):
    try:
@@ -254,6 +254,8 @@ def routeUpdateNote(userId):
    except Exception as e:
       return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 
+
+print('🔥 the server started!')
 
 # Port config
 def main():

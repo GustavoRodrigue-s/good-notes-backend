@@ -226,3 +226,5 @@ class DbActions:
       self.setLastCategoryUpdate(data)
 
       return lastModification
+
+# dividir as querys em classes (pesquisar sobre migrations)

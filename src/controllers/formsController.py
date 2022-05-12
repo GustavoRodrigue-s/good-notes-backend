@@ -1,7 +1,7 @@
-from models.db.connection import connectionDB
+from database.connection import connectionDB
 
-from models.entities.App import App
-from models.entities.User import User
+from app.models.App import App
+from app.models.User import User
 
 def createNewUserInDbHandler(user):
 

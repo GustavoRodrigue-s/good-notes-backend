@@ -1,5 +1,5 @@
 import psycopg2
-from models.entities.DbActions import DbActions
+from app.models.DbActions import DbActions
 import os
 
 def connectionDB(action, data):
