@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import request, jsonify
 
-from controllers.sessionController import restoreSessionHandler, sessionIdBlackList
+from app.controllers.sessionController import restoreSessionHandler, sessionIdBlackList
 
 from app.models.User import User
 
