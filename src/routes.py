@@ -8,10 +8,10 @@ sys.path.insert(1, './src')
 
 from database.connection import connectionDB
 
-from controllers import sessionController
-from controllers import formsController
-from controllers import categoryController
-from controllers.UseNotesController import UseNotesController
+from app.controllers import sessionController
+from app.controllers import formsController
+from app.controllers import categoryController
+from app.controllers.UseNotesController import UseNotesController
 
 from decorators import jwt_required, apiKey_required
 
