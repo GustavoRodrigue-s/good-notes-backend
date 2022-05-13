@@ -1,31 +1,34 @@
 from database.connection import connectionDB 
 
-def createCategoryHandler(userId, categoryName):
+class UseCategoryController:
+   def store(self, userId, categoryName):
+      categoryId = connectionDB('addCategory', {
+         'userId': userId,
+         'categoryName': categoryName or 'Nova Categoria'
+      })
 
-   categoryId = connectionDB('addCategory', {
-      'userId': userId,
-      'categoryName': categoryName or 'Nova Categoria'
-   })
+      return categoryId
 
-   return categoryId
+   def destore(self, userId, categoryId):
 
-def deleteCategoryHandler(userId, categoryId):
-   
-   connectionDB('deleteCategory', {
-      'userId': userId,
-      'categoryId': categoryId
-   })
+      connectionDB('deleteCategory', {
+         'userId': userId,
+         'categoryId': categoryId
+      })
 
-def updateCategoryHandler(userId, requestData):
+   def updateStore(self, userId, requestData):
 
-   connectionDB('updateCategory', {
-      'userId': userId,
-      'categoryId': requestData['categoryId'],
-      'newCategoryName': requestData['newCategoryName'] or 'Nova Categoria'
-   })
+      connectionDB('updateCategory', {
+         'userId': userId,
+         'categoryId': requestData['categoryId'],
+         'newCategoryName': requestData['newCategoryName'] or 'Nova Categoria'
+      })
 
-def getCategoriesHandler(userId):
+   def getStore(self, userId):
 
-   allCurrentCategories = connectionDB('getCategories', { 'userId': userId })
+      allCurrentCategories = connectionDB('getCategories', { 'userId': userId })
 
-   return allCurrentCategories
+      return allCurrentCategories
+
+
+CategoryController = UseCategoryController()

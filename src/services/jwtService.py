@@ -2,6 +2,7 @@ import jwt
 
 from datetime import datetime, timedelta
 
+# realmente precisa dessas func???
 def generateToken(id, SECRET_KEY, time):
 
    data = { "id": id, "exp": datetime.utcnow() + timedelta(minutes=time) }

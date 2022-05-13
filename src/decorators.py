@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import request, jsonify
 
-from app.controllers.sessionController import restoreSessionHandler, sessionIdBlackList
+from app.controllers.AuthController import AuthController, sessionIdBlackList
 
 from app.models.User import User
 
@@ -34,7 +34,7 @@ def jwt_required(f):
          refreshToken = request.headers['Authorization'].split(';')[1]
 
          try:
-            newAccessToken = restoreSessionHandler(refreshToken)
+            newAccessToken = AuthController.restoreAuthentication(refreshToken)
 
             return jsonify(
                { 

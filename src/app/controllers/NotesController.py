@@ -2,8 +2,8 @@ from database.connection import connectionDB
 from app.models.App import App 
 
 class UseNotesController:
-   @staticmethod
-   def getNotesHandler(userId, categoryId):
+   def getStore(self, userId, categoryId):
+
       allNotes = connectionDB('getNotes', {
          'categoryId': categoryId,
          'userId': userId
@@ -24,8 +24,7 @@ class UseNotesController:
 
       return allNotesFormated
 
-   @staticmethod
-   def createNoteHandler(userId, categoryId):
+   def store(self, userId, categoryId):
 
       noteDatas = connectionDB('insertNote', {
          'categoryId': categoryId,
@@ -40,16 +39,15 @@ class UseNotesController:
       
       return noteDataFormated
 
-   @staticmethod
-   def deleteNoteHandler(noteId, categoryId, userId):
+   def destore(self, noteId, categoryId, userId):
+
       connectionDB('deleteNote', {
          'noteId': noteId,
          'categoryId': categoryId,
          'userId': userId
       })
 
-   @staticmethod
-   def updateNoteHandler(userId, requestData):
+   def updateStore(self, userId, requestData):
 
       App.checkNoteErros(requestData)
 
@@ -63,3 +61,6 @@ class UseNotesController:
       })
 
       return newLastModification
+
+
+NotesController = UseNotesController()
