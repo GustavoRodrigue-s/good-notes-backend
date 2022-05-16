@@ -28,8 +28,8 @@ class App:
       if user.password[0] and user.password[1] and user.password[0] != user.password[1]:
          wrongInputs.append({'input': 'inputsPasswords', "reason": "differents passwords"})
          
-
-      if wrongInputs != []: raise Exception(wrongInputs)
+      if wrongInputs != []: 
+         return wrongInputs
 
    @staticmethod
    def checkLoginErrors(user, userDatabase):

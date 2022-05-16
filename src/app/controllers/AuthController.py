@@ -14,12 +14,9 @@ sessionIdBlackList = []
 
 # auth (todo momento do usuário autenticado ou que vai autenticar)
 
-# o authenticate foi projetao para funcionar apenas no login...
 class UseAuthController():
    def authenticate(self, requestData):
       user = User(requestData)
-
-      print(user)
 
       userDB = connectionDB('getOneUser', {
          'item': '*',
@@ -36,8 +33,15 @@ class UseAuthController():
 
       user.id = hasUserInDB[0]
 
-      # currentUser = User(requestData)
-      # currentUser.id = User.getCurrentUserId(currentUser)
+      accessToken, refreshToken, apiKey = self.createAuthentication(user, requestData['keepConnected'])
+
+      return { 
+         'accessToken': accessToken,
+         'refreshToken': refreshToken,
+         'apiKey': apiKey 
+      }
+
+   def createAuthentication(self, user, keepConnected):
 
       if user.id in sessionIdBlackList:
          sessionIdBlackList.remove(user.id)
@@ -46,15 +50,15 @@ class UseAuthController():
 
       accessToken = jwtService.generateToken(user.id, os.environ.get('ACCESS_TOKEN_KEY'), 5)
 
-      if requestData['keepConnected'] == True: refreshTokenExpirationTime = 43200
-      else: refreshTokenExpirationTime = 1440
+      refreshTokenExpirationTime = 43200 if keepConnected else 1440
 
       refreshToken = jwtService.generateToken(user.id, os.environ.get('REFRESH_TOKEN_KEY'), refreshTokenExpirationTime)
 
-      return { 'accessToken': accessToken, 'refreshToken': refreshToken, 'apiKey': apiKey  }
+      return accessToken, refreshToken, apiKey
 
 # talvez colocar esse restore no middleware auth
    def restoreAuthentication(self, refreshToken):
+      
       userId = jwtService.decodeRefreshToken(refreshToken, os.environ.get('REFRESH_TOKEN_KEY'))
 
       if userId in sessionIdBlackList:

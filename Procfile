@@ -1,1 +1,1 @@
-web: python src/routes.py
+web: python src/server.py

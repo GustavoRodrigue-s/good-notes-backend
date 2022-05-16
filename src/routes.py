@@ -34,24 +34,7 @@ def createRoutes(app):
 
    @app.route('/register', methods=['POST'])
    def routeRegister():
-      requestData = json.loads(request.data)
-
-      try:
-         UserController.store(requestData)
-
-         sessionData = AuthController.authenticate(requestData)
-
-         return jsonify(
-            {
-               "state": "success",
-               "reason": "all right",
-               "userData": sessionData
-            }, 200
-         )
-      except Exception as e:
-         respData = [e.args[0]] if type(e.args[0]) != list else e.args[0]
-
-         return jsonify({"errors": respData, "state": "error"}, 401)
+      return UserController.store()
 
    @app.route('/auth', methods=['GET'])
    @apiKey_required

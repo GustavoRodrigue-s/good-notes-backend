@@ -1,23 +1,34 @@
+from flask import request, json, jsonify
+
 from database.connection import connectionDB
 
 from app.models.App import App
 from app.models.User import User
 
-class UseUserController():
-   def store(self, requestData):
+from app.controllers.AuthController import AuthController
 
-      user = User(requestData)
+class UseUserController():
+   def store(self):
+
+      user = json.loads(request.data)
    
-      hasUserWithSomeCredentials = connectionDB('getUserWithSomeCredentials', {
+      # colocar isso dentro de migrations
+      existsUserWithSameCredentials = connectionDB('getUserWithSomeCredentials', {
          'condition1': "email = %s",
-         'datas1': (user.email, ),
+         'datas1': (user['email'], ),
          'condition2': "username = %s",
-         'datas2': (user.username, )
+         'datas2': (user['username'], )
       })
 
-      App.checkRegistrationErrors(user, hasUserWithSomeCredentials)
+      hasSomeErrors = App.checkRegistrationErrors(user, existsUserWithSameCredentials)
 
-      User.setNewIdForCurrentUser(user)
+      if hasSomeErrors:
+         # respData = [hasSomeErrors[0]] if type(hasSomeErrors[0]) != list else hasSomeErrors[0]
+
+         return jsonify({"errors": hasSomeErrors, "state": "error"}, 401)
+
+
+      # User.setNewIdForCurrentUser(user)
 
       apiKey = User.setNewApiKeyForCurrentUser(user.id)
 
@@ -30,6 +41,19 @@ class UseUserController():
          'password': user.password,
          'apiKey': apiKey
       })
+
+      accessToken, refreshToken, apiKey = AuthController.createAuthentication(user, requestData['keepConnected'])
+
+      # sessionData = AuthController.authenticate(user)
+
+      return jsonify (
+         {
+            "state": "success",
+            "reason": "all right",
+            "userData": { 'accessToken': accessToken, 'refreshToken': refreshToken, 'apiKey': apiKey }
+         }, 200
+      )
+
 
    def destore(self, userId):
 
