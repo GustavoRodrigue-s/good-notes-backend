@@ -3,7 +3,7 @@ from services import jwtService
 from dotenv import load_dotenv
 import os
 
-from database.connection import connectionDB
+from database.Database import connectionDB
 
 from app.models.User import User
 from app.models.App import App

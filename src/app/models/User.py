@@ -1,4 +1,4 @@
-from database.connection import connectionDB
+from database.Database import Database
 from random import sample
 
 from dotenv import load_dotenv
@@ -8,37 +8,91 @@ from cryptocode import encrypt, decrypt
 
 load_dotenv()
 class User:
-   def __init__(self, user):
-      try:
-         self.username = user['username'] 
-      except:
-         self.username = ""
 
-      self.email = user['email']
-      self.password = user['password']
+   def __init__(self, username = None, email = None, password = None, confirmPassword = None):
 
-   @staticmethod
-   def setNewIdForCurrentUser(currentUser):
+      self.username = username
+      self.email = email
+      self.password = password
+      self.confirmPassword = confirmPassword
+
+   def validateUserCreation(self):
+
+      errors = [*self.validateUsernameAndEmail()]
+
+      if self.password == '' or self.confirmPassword == '':
+         errors.append({'input': 'inputsPasswords', "reason": 'empty inputs'})
+
+      elif self.password != self.confirmPassword:
+         errors.append({'input': 'inputsPasswords', "reason": "differents passwords"})
+         
+      return errors
+
+   def validateUsernameAndEmail(self):
+
+      userExistsWithEmail = self.findOneUser('email = %s', self.email)
+      userExistsWithUsername = self.findOneUser('username = %s', self.username)
+
+      errors = []
+
+      if self.email == '':
+         errors.append({'input': 'inputEmail', 'reason': 'empty input'})
+
+      elif userExistsWithEmail:
+         errors.append({'input': 'inputEmail', 'reason': 'email already exists'})
+
+      if self.username == '':
+         errors.append({'input': 'inputUsername', 'reason': 'empty input'})
+
+      elif userExistsWithUsername:
+         errors.append({'input': 'inputUsername', 'reason': 'username already exists'})
+
+      return errors
+
+   def findOneUser(self, condition, value):
+
+      query = f'''SELECT * FROM users WHERE {condition}''', (value, )
+
+      cursor, connection = Database.connect()
+
+      cursor.execute(query)
+      user = cursor.fetchone()
+
+      Database.disconnect(cursor, connection)
+
+      return user
+
+   def create(self):
+
+      self.createId()
+      self.createApiKey()
+      self.hashPassword()
+
+      query = '''
+         INSERT INTO users(id, username, email, password, apiKey) VALUES(%s, %s, %s, %s ,%s)
+      ''',
+      (self.id, self.username, self.email, self.password, self.apiKey)
+
+      cursor, connection = Database.connect()
+
+      cursor.execute(query)
+
+      Database.disconnect(cursor, connection)
+
+   def createId(self):
       letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
       while True:
          randomId = ''.join(sample(letters, 5))
 
-         userOfdb = connectionDB('getOneUser', {
-            'item': '*',
-            'condition': "id = %s",
-            'datas': (randomId,)
-         })
+         user = self.findOneUser('id = %s', randomId)
 
-         if userOfdb == None:
+         if user == None:
             break                
 
-      currentUser.id = randomId
+      self.id = randomId
 
-      return randomId
-
-   @staticmethod
-   def getCurrentUserId(currentUser):
+   def getCurrentUserId(self, currentUser):
       currentId = connectionDB('getOneUser', {
          'item': 'id',
          'condition': "email = %s OR username = %s",
@@ -47,8 +101,7 @@ class User:
 
       return currentId
 
-   @staticmethod
-   def getApiKeyHandler(currentUserId):
+   def getApiKeyHandler(self, currentUserId):
       
       apiKey = connectionDB('getOneUser', {
          'item': 'apiKey',
@@ -58,24 +111,21 @@ class User:
 
       return apiKey
 
-   @staticmethod
-   def setNewApiKeyForCurrentUser(currentUserId):
+   def createApiKey(self):
       letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
       randomKey = ''.join(sample(letters, 15))
 
-      apiKey = randomKey + "-" + currentUserId
+      apiKey = randomKey + "-" + self.id
 
-      return apiKey
+      self.apiKey = apiKey
 
-   @staticmethod
-   def hashPassword(currentPassword):
-      hashPassword = encrypt(currentPassword, os.environ.get('HASH_PASSWORD_KEY'))
+   def hashPassword(self):
+      hashPassword = encrypt(self.password, os.environ.get('HASH_PASSWORD_KEY'))
 
-      return hashPassword
+      self.password = hashPassword
 
-   @staticmethod
-   def decryptHashPassword(currentHashPassword):
+   def decryptHashPassword(self, currentHashPassword):
       decodePassword = decrypt(currentHashPassword, os.environ.get('HASH_PASSWORD_KEY'))
 
       return decodePassword

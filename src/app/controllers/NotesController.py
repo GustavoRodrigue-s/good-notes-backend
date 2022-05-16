@@ -1,4 +1,4 @@
-from database.connection import connectionDB
+from database.Database import connectionDB
 from app.models.App import App 
 
 class UseNotesController:

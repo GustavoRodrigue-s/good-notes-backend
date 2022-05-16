@@ -5,7 +5,7 @@ import os, sys
 
 sys.dont_write_bytecode = True
 
-from database.connection import connectionDB
+from database.Database import connectionDB
 from routes import createRoutes
 
 # API config 

@@ -48,17 +48,17 @@ class DbActions:
          (data['id'], data['username'], data['email'], data['password'], data['apiKey'])
       )
 
-   def getOneUser(self, data):
-      self.cursor.execute(
-         f'''
-            SELECT {data['item']} FROM users WHERE {data['condition']}
-         ''',
-         data['datas']
-      )
+   # def getOneUser(self, data):
+   #    self.cursor.execute(
+   #       f'''
+   #          SELECT {data['item']} FROM users WHERE {data['condition']}
+   #       ''',
+   #       data['datas']
+   #    )
 
-      response = self.cursor.fetchone()
+   #    response = self.cursor.fetchone()
 
-      return response
+   #    return response
 
    def updateUser(self, data):
       self.cursor.execute(
@@ -84,23 +84,6 @@ class DbActions:
       )
 
       return 'deleted'
-
-   def getUserWithSomeCredentials(self, data):
-      self.cursor.execute(
-         f'''SELECT * FROM users WHERE {data['condition1']}''',
-         data['datas1']
-      )
-
-      response1 = self.cursor.fetchone()
-
-      self.cursor.execute(
-         f'''SELECT * FROM users WHERE {data['condition2']}''',
-         data['datas2']
-      )
-
-      response2 = self.cursor.fetchone()
-
-      return {"hasUserWithSomeEmail": response1, "hasUserWithSomeUsername": response2}
 
    def insertCategory(self, data):
       self.cursor.execute(

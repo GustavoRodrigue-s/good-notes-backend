@@ -1,4 +1,4 @@
-from database.connection import connectionDB 
+from database.Database import connectionDB 
 
 class UseCategoryController:
    def store(self, userId, categoryName):
