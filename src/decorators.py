@@ -55,28 +55,3 @@ def jwt_required(f):
       return f(*args, *kwargs)
 
    return wrapper
-
-
-def apiKey_required(f):
-   @wraps(f)
-   def wrapper(*args, **kwargs):
-
-      try:
-         userApiKey = request.args.get('key')
-
-         if userApiKey == '' or userApiKey == None:
-            return jsonify({ 'state': 'unauthorized', 'reason': 'no api key' }, 403)
-
-         userId = userApiKey.split('-')[1]
-
-         apiKeyOfThisUser = User.getApiKeyHandler(userId)
-
-         if userApiKey != apiKeyOfThisUser:
-            return jsonify({ 'state': "unauthorized", 'reason': 'the api key is wrong' }, 401)
-            
-      except:
-         return jsonify({ 'state': "unauthorized" }, 403)
-
-      return f(userId, *args, *kwargs)
-
-   return wrapper

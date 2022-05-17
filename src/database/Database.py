@@ -1,33 +1,30 @@
 import psycopg2
 import os
 
-class UseDatabase:
+from dotenv import load_dotenv
 
-   def __init__(self):
-      self.host = os.environ.get('DATABASE_HOST')
-      self.dbname = os.environ.get('DATABASE_NAME')
-      self.user = os.environ.get('DATABASE_USER')
-      self.password = os.environ.get('DATABASE_PASSWORD')
-      self.port = os.environ.get('DATABASE_PORT')
+load_dotenv()
+
+class UseDatabase:
 
    def connect(self):
       
-      connection = psycopg2.connect(
-         host = self.host,
-         dbname = self.dbname,
-         user = self.user,
-         password = self.password,
-         port = self.port
+      dbConnection = psycopg2.connect(
+         host = os.environ.get('DATABASE_HOST'),
+         dbname = os.environ.get('DATABASE_NAME'),
+         user = os.environ.get('DATABASE_USER'),
+         password = os.environ.get('DATABASE_PASSWORD'),
+         port = os.environ.get('DATABASE_PORT')
       )
 
-      cursor = connection.cursor()
+      cursor = dbConnection.cursor()
 
-      return cursor, connection
+      return cursor, dbConnection
    
-   def disconnect(self, cursor, connection):
-      connection.commit()
+   def disconnect(self, cursor, dbConnection):
+      dbConnection.commit()
       cursor.close()
-      connection.close()
+      dbConnection.close()
 
 
 Database = UseDatabase()

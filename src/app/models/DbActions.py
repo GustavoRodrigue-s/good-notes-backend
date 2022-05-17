@@ -8,11 +8,10 @@ class DbActions:
          SET TIMEZONE='America/Sao_Paulo';
 
          CREATE TABLE IF NOT EXISTS users(
-            id          VARCHAR(5) NOT NULL,
+            id          SERIAL NOT NULL,
             username    VARCHAR(255) NOT NULL,
             email       VARCHAR(255) NOT NULL,
             password    VARCHAR(255)  NOT NULL,
-            apiKey      VARCHAR(21)  NOT NULL,
             datetime    TIMESTAMPTZ DEFAULT NOW(),
             PRIMARY KEY (id)
          );
@@ -42,11 +41,11 @@ class DbActions:
          )
       ''')
    
-   def insertUser(self, data):
-      self.cursor.execute(
-         "INSERT INTO users(id, username, email, password, apiKey) VALUES(%s,%s,%s,%s,%s)",
-         (data['id'], data['username'], data['email'], data['password'], data['apiKey'])
-      )
+   # def insertUser(self, data):
+   #    self.cursor.execute(
+   #       "INSERT INTO users(id, username, email, password, apiKey) VALUES(%s,%s,%s,%s,%s)",
+   #       (data['id'], data['username'], data['email'], data['password'], data['apiKey'])
+   #    )
 
    # def getOneUser(self, data):
    #    self.cursor.execute(
@@ -211,3 +210,4 @@ class DbActions:
       return lastModification
 
 # dividir as querys em classes (pesquisar sobre migrations)
+

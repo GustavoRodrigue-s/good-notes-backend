@@ -1,5 +1,4 @@
 from database.Database import Database
-from random import sample
 
 from dotenv import load_dotenv
 import os
@@ -9,14 +8,15 @@ from cryptocode import encrypt, decrypt
 load_dotenv()
 class User:
 
-   def __init__(self, username = None, email = None, password = None, confirmPassword = None):
+   def __init__(self, data):
 
-      self.username = username
-      self.email = email
-      self.password = password
-      self.confirmPassword = confirmPassword
+      self.username = data['username'] if 'username' in data else None
+      self.email = data['email'] if 'email' in data else None
+      self.password = data['password'] if 'password' in data else None
+      self.confirmPassword = data['confirmPassword'] if 'confirmPassword' in data else None
+      self.keepConnected = data['keepConnected'] if 'keepConnected' in data else None
 
-   def validateUserCreation(self):
+   def validateSignUp(self):
 
       errors = [*self.validateUsernameAndEmail()]
 
@@ -26,6 +26,31 @@ class User:
       elif self.password != self.confirmPassword:
          errors.append({'input': 'inputsPasswords', "reason": "differents passwords"})
          
+      return errors
+
+   def validateSignIn(self, userExists):
+
+      errors = []
+
+      if self.email == '':
+         errors.append({'input': 'inputEmail', "reason": "empty input"})
+
+      if self.password == '':
+         errors.append({'input': 'inputPassword', "reason": "empty input"})
+
+      if not self.email or not self.password:
+         return errors
+
+      if not userExists:
+         errors.append({ "reason": "wrong credentials" })
+
+         return errors
+
+      userExistsPassword = self.decryptHashPassword(userExists[3])
+
+      if userExistsPassword != self.password:
+         errors.append({ "reason": "wrong credentials" })
+
       return errors
 
    def validateUsernameAndEmail(self):
@@ -49,13 +74,13 @@ class User:
 
       return errors
 
-   def findOneUser(self, condition, value):
+   def findOneUser(self, where, *value):
 
-      query = f'''SELECT * FROM users WHERE {condition}''', (value, )
+      query = f'''SELECT * FROM users WHERE {where}'''
 
       cursor, connection = Database.connect()
 
-      cursor.execute(query)
+      cursor.execute(query, (*value, ))
       user = cursor.fetchone()
 
       Database.disconnect(cursor, connection)
@@ -64,68 +89,34 @@ class User:
 
    def create(self):
 
-      self.createId()
-      self.createApiKey()
       self.hashPassword()
 
       query = '''
-         INSERT INTO users(id, username, email, password, apiKey) VALUES(%s, %s, %s, %s ,%s)
-      ''',
-      (self.id, self.username, self.email, self.password, self.apiKey)
+         INSERT INTO users(id, username, email, password) 
+         VALUES(DEFAULT, %s, %s, %s) RETURNING id
+      '''
 
       cursor, connection = Database.connect()
 
-      cursor.execute(query)
+      cursor.execute(query,  (self.username, self.email, self.password))
+
+      self.id = cursor.fetchone()[0]
 
       Database.disconnect(cursor, connection)
 
-   def createId(self):
-      letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+   # talvez tirar todos esses gets e usar o findOneUser
+   def getId(self):
 
-      while True:
-         randomId = ''.join(sample(letters, 5))
+      id = self.findOneUser('email = %s OR username = %s', self.email, self.email)[0]
 
-         user = self.findOneUser('id = %s', randomId)
-
-         if user == None:
-            break                
-
-      self.id = randomId
-
-   def getCurrentUserId(self, currentUser):
-      currentId = connectionDB('getOneUser', {
-         'item': 'id',
-         'condition': "email = %s OR username = %s",
-         'datas': (currentUser.email, currentUser.email)
-      })[0]
-
-      return currentId
-
-   def getApiKeyHandler(self, currentUserId):
-      
-      apiKey = connectionDB('getOneUser', {
-         'item': 'apiKey',
-         'condition': "id = %s",
-         'datas': (currentUserId,)
-      })[0]
-
-      return apiKey
-
-   def createApiKey(self):
-      letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-      randomKey = ''.join(sample(letters, 15))
-
-      apiKey = randomKey + "-" + self.id
-
-      self.apiKey = apiKey
+      return id
 
    def hashPassword(self):
       hashPassword = encrypt(self.password, os.environ.get('HASH_PASSWORD_KEY'))
 
       self.password = hashPassword
 
-   def decryptHashPassword(self, currentHashPassword):
-      decodePassword = decrypt(currentHashPassword, os.environ.get('HASH_PASSWORD_KEY'))
+   def decryptHashPassword(self, currentPassword):
+      decodePassword = decrypt(currentPassword, os.environ.get('HASH_PASSWORD_KEY'))
 
       return decodePassword

@@ -1,60 +1,57 @@
+from flask import request, json, jsonify
+
 from services import jwtService
 
 from dotenv import load_dotenv
 import os
 
-from database.Database import connectionDB
-
 from app.models.User import User
-from app.models.App import App
 
 load_dotenv()
 
 sessionIdBlackList = []
 
-# auth (todo momento do usuário autenticado ou que vai autenticar)
+# auth (todo momento do usuário autenticado ou que vai autenticar) 
 
 class UseAuthController():
-   def authenticate(self, requestData):
-      user = User(requestData)
+   def authenticate(self):
 
-      userDB = connectionDB('getOneUser', {
-         'item': '*',
-         'condition': "email = %s OR username = %s",
-         'datas': (user.email, user.email)
-      })
+      data = json.loads(request.data)
 
-      hasUserInDB = list(userDB) if userDB else userDB
+      user = User(data)
 
-      if hasUserInDB:
-         hasUserInDB[3] = User.decryptHashPassword(hasUserInDB[3])
+      userExists = user.findOneUser('email = %s OR username = %s', user.email, user.email)
 
-      App.checkLoginErrors(user, hasUserInDB)
+      hasSomeError = user.validateSignIn(userExists)
 
-      user.id = hasUserInDB[0]
+      if hasSomeError:
+         return jsonify({"errors": hasSomeError, "state": "error"}, 401)
 
-      accessToken, refreshToken, apiKey = self.createAuthentication(user, requestData['keepConnected'])
+      user.id = userExists[0]
 
-      return { 
-         'accessToken': accessToken,
-         'refreshToken': refreshToken,
-         'apiKey': apiKey 
-      }
+      accessToken, refreshToken = self.createAuthentication(user)
 
-   def createAuthentication(self, user, keepConnected):
+      return jsonify({
+         "state": "success",
+         "reason": "all right",
+         "userData": { 
+            'accessToken': accessToken,
+            'refreshToken': refreshToken
+         }
+      }, 200)
+
+   def createAuthentication(self, user):
 
       if user.id in sessionIdBlackList:
          sessionIdBlackList.remove(user.id)
 
-      apiKey = User.getApiKeyHandler(user.id)
-
       accessToken = jwtService.generateToken(user.id, os.environ.get('ACCESS_TOKEN_KEY'), 5)
 
-      refreshTokenExpirationTime = 43200 if keepConnected else 1440
+      refreshToken = jwtService.generateToken(
+         user.id, os.environ.get('REFRESH_TOKEN_KEY'), 43200 if user.keepConnected else 1440
+      )
 
-      refreshToken = jwtService.generateToken(user.id, os.environ.get('REFRESH_TOKEN_KEY'), refreshTokenExpirationTime)
-
-      return accessToken, refreshToken, apiKey
+      return accessToken, refreshToken
 
 # talvez colocar esse restore no middleware auth
    def restoreAuthentication(self, refreshToken):
