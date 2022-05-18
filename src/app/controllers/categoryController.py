@@ -4,51 +4,61 @@ from app.models.Category import Category
 
 class UseCategoryController:
    def store(self, userId):
+      try:
 
-      requestData = json.loads(request.data)
+         requestData = json.loads(request.data)
 
-      category = Category(requestData['categoryName'])
+         category = Category(requestData['categoryName'])
 
-      category.create(userId)
+         category.create(userId)
 
-      return jsonify({ 'state': 'success', 'categoryId': category.id }, 200)
+         return jsonify({ 'state': 'success', 'categoryId': category.id }, 200)
+
+      except Exception as e:
+         return jsonify({ "state": "error", 'reason': f'{e}' }, 401)
 
    def destore(self, userId):
+      try:
+         
+         requestData = json.loads(request.data)
 
-      requestData = json.loads(request.data)
+         category = Category()
 
-      if not 'categoryId' in requestData:
-         return jsonify({ 'state': 'error', 'reason': 'no category id' }, 401)
+         category.id = requestData['categoryId']
 
-      category = Category()
+         category.delete(userId)
 
-      category.id = requestData['categoryId']
+         return jsonify({ 'state': 'success' }, 200)
 
-      category.delete(userId)
-
-      return jsonify({ 'state': 'success' }, 200)
+      except Exception as e:
+         return jsonify({ "state": "error", 'reason': f'{e}' }, 401)
 
    def updateStore(self, userId):
+      try:
 
-      requestData = json.loads(request.data)
-      
-      if not 'categoryId' in requestData:
-         return jsonify({ 'state': 'error', 'reason': 'no category id' }, 401)
+         requestData = json.loads(request.data)
 
-      category = Category(requestData['newCategoryName'])
+         category = Category(requestData['newCategoryName'])
 
-      category.id = requestData['categoryId']
+         category.id = requestData['categoryId']
 
-      category.update(userId)
-         
-      return jsonify({ 'state': 'success' }, 200)
+         category.update(userId)
+            
+         return jsonify({ 'state': 'success' }, 200)
+
+      except Exception as e:
+         return jsonify({ "state": "error", 'reason': f'{e}' }, 401)
 
    def getStore(self, userId):
+      try:
 
-      category = Category()
+         category = Category()
 
-      allCategories = category.findAll(userId)
+         allCategories = category.findAll(userId)
 
-      return jsonify({ 'state': 'success', 'categories': allCategories }, 200)
+         return jsonify({ 'state': 'success', 'categories': allCategories }, 200)
+
+      except Exception as e:
+         return jsonify({ "state": "error", 'reason': f'{e}' }, 401)
 
 CategoryController = UseCategoryController()

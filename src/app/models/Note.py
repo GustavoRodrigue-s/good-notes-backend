@@ -30,11 +30,13 @@ class Note:
 
       cursor, connection = Database.connect()
 
-      cursor.execute(query, (categoryId, userId))
+      try:
+         cursor.execute(query, (categoryId, userId))
 
-      items = cursor.fetchall()
+         items = cursor.fetchall()
 
-      Database.disconnect(cursor, connection)
+      finally:
+         Database.disconnect(cursor, connection)
 
       return items
 
@@ -56,11 +58,13 @@ class Note:
 
       cursor, connection = Database.connect()
 
-      cursor.execute(query, (categoryId, userId, summary, content))
+      try:
+         cursor.execute(query, (categoryId, userId, summary, content))
 
-      id, dateCreated, lastModification = cursor.fetchone()
+         id, dateCreated, lastModification = cursor.fetchone()
 
-      Database.disconnect(cursor, connection)
+      finally:
+         Database.disconnect(cursor, connection)
 
       self.id = id
       self.dateCreated = dateCreated
@@ -72,9 +76,11 @@ class Note:
 
       cursor, connection = Database.connect()
 
-      cursor.execute(query, (self.id, categoryId, userId))
+      try:
+         cursor.execute(query, (self.id, categoryId, userId))
 
-      Database.disconnect(cursor, connection)
+      finally:
+         Database.disconnect(cursor, connection)
 
    def update(self, categoryId, userId):
 
@@ -90,8 +96,10 @@ class Note:
 
       cursor, connection = Database.connect()
 
-      cursor.execute(query, (self.title, self.summary, self.content, self.id, categoryId, userId))
+      try:
+         cursor.execute(query, (self.title, self.summary, self.content, self.id, categoryId, userId))
 
-      self.lastModification = cursor.fetchone()[0]
+         self.lastModification = cursor.fetchone()[0]
 
-      Database.disconnect(cursor, connection)
+      finally:
+         Database.disconnect(cursor, connection)

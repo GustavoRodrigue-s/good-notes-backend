@@ -16,11 +16,13 @@ class Category:
 
       cursor, connection = Database.connect()
 
-      cursor.execute(query, (userId, ))
+      try:
+         cursor.execute(query, (userId, ))
 
-      items = cursor.fetchall()
+         items = cursor.fetchall()
 
-      Database.disconnect(cursor, connection)
+      finally:
+         Database.disconnect(cursor, connection)
 
       return items
 
@@ -33,11 +35,13 @@ class Category:
 
       cursor, connection = Database.connect()
 
-      cursor.execute(query, (userId, self.name))
+      try:
+         cursor.execute(query, (userId, self.name))
 
-      self.id = cursor.fetchone()
+         self.id = cursor.fetchone()
 
-      Database.disconnect(cursor, connection)
+      finally:
+         Database.disconnect(cursor, connection)
 
    def delete(self, userId):
 
@@ -48,9 +52,11 @@ class Category:
 
       cursor, connection = Database.connect()
 
-      cursor.execute(query, (self.id, userId, self.id, userId))
+      try:
+         cursor.execute(query, (self.id, userId, self.id, userId))
 
-      Database.disconnect(cursor, connection)
+      finally:
+         Database.disconnect(cursor, connection)
 
    def update(self, userId):
       
@@ -61,9 +67,11 @@ class Category:
 
       cursor, connection = Database.connect()
 
-      cursor.execute(query, (self.name, self.id, userId))
+      try:
+         cursor.execute(query, (self.name, self.id, userId))
 
-      Database.disconnect(cursor, connection)
+      finally:
+         Database.disconnect(cursor, connection)
 
    def updateLastModification(self, userId):
 
@@ -74,6 +82,8 @@ class Category:
 
       cursor, connection = Database.connect()
 
-      cursor.execute(query, (self.id, userId))
+      try:
+         cursor.execute(query, (self.id, userId))
 
-      Database.disconnect(cursor, connection)
+      finally:
+         Database.disconnect(cursor, connection)

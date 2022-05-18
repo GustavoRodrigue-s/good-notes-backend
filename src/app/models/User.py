@@ -80,10 +80,12 @@ class User:
 
       cursor, connection = Database.connect()
 
-      cursor.execute(query, (*value, ))
-      user = cursor.fetchone()
+      try:
+         cursor.execute(query, (*value, ))
+         user = cursor.fetchone()
 
-      Database.disconnect(cursor, connection)
+      finally:
+         Database.disconnect(cursor, connection)
 
       return user
 
@@ -98,11 +100,13 @@ class User:
 
       cursor, connection = Database.connect()
 
-      cursor.execute(query,  (self.username, self.email, self.password))
+      try:
+         cursor.execute(query,  (self.username, self.email, self.password))
 
-      self.id = cursor.fetchone()[0]
+         self.id = cursor.fetchone()[0]
 
-      Database.disconnect(cursor, connection)
+      finally:
+         Database.disconnect(cursor, connection)
 
    def delete(self):
 
@@ -114,9 +118,11 @@ class User:
 
       cursor, connection = Database.connect()
 
-      cursor.execute(query, (self.id, self.id, self.id))
+      try:
+         cursor.execute(query, (self.id, self.id, self.id))
 
-      Database.disconnect(cursor, connection)
+      finally:
+         Database.disconnect(cursor, connection)
 
    def updateUsernameAndEmail(self):
 
@@ -124,9 +130,11 @@ class User:
 
       cursor, connection = Database.connect()
 
-      cursor.execute(query, (self.email, self.username, self.id))
+      try:
+         cursor.execute(query, (self.email, self.username, self.id))
 
-      Database.disconnect(cursor, connection)
+      finally:
+         Database.disconnect(cursor, connection)
 
    def hashPassword(self):
       hashPassword = encrypt(self.password, os.environ.get('HASH_PASSWORD_KEY'))
