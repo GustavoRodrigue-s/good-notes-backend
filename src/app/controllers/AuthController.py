@@ -1,6 +1,6 @@
 from flask import request, json, jsonify
 
-from services import jwtService
+from services.jwtService import decodeToken, generateToken
 
 from dotenv import load_dotenv
 import os
@@ -11,8 +11,6 @@ load_dotenv()
 
 sessionIdBlackList = []
 
-# auth (todo momento do usuário autenticado ou que vai autenticar) 
-
 class UseAuthController():
    def authenticate(self):
 
@@ -20,7 +18,7 @@ class UseAuthController():
 
       user = User(data)
 
-      userExists = user.findOneUser('email = %s OR username = %s', user.email, user.email)
+      userExists = user.findOne('email = %s OR username = %s', user.email, user.email)
 
       hasSomeError = user.validateSignIn(userExists)
 
@@ -45,29 +43,30 @@ class UseAuthController():
       if user.id in sessionIdBlackList:
          sessionIdBlackList.remove(user.id)
 
-      accessToken = jwtService.generateToken(user.id, os.environ.get('ACCESS_TOKEN_KEY'), 5)
+      accessToken = generateToken(user.id, os.environ.get('ACCESS_TOKEN_KEY'), 10)
 
-      refreshToken = jwtService.generateToken(
+      refreshToken = generateToken(
          user.id, os.environ.get('REFRESH_TOKEN_KEY'), 43200 if user.keepConnected else 1440
       )
 
       return accessToken, refreshToken
 
-# talvez colocar esse restore no middleware auth
    def restoreAuthentication(self, refreshToken):
       
-      userId = jwtService.decodeRefreshToken(refreshToken, os.environ.get('REFRESH_TOKEN_KEY'))
+      userId = decodeToken(refreshToken, os.environ.get('REFRESH_TOKEN_KEY'))['id']
 
       if userId in sessionIdBlackList:
          raise Exception('the session is not valid')
 
-      newAccessToken = jwtService.generateToken(userId, os.environ.get('ACCESS_TOKEN_KEY'), 5)
+      newAccessToken = generateToken(userId, os.environ.get('ACCESS_TOKEN_KEY'), 10)
 
       return newAccessToken
 
    def exitAuthentication(self, userId):
 
       sessionIdBlackList.append(userId)
+
+      return jsonify({ 'state': 'success' }, 200)
 
 
 AuthController = UseAuthController()

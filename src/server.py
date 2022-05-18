@@ -5,7 +5,7 @@ import os, sys
 
 sys.dont_write_bytecode = True
 
-# from database.Database import connectionDB
+from database.Database import Database
 from routes import createRoutes
 
 # API config 
@@ -14,7 +14,7 @@ cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 
-# connectionDB('createTable', None)
+Database.createTables()
 
 createRoutes(app)
 

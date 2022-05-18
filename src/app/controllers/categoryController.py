@@ -1,34 +1,54 @@
-from database.Database import connectionDB 
+from flask import request, json, jsonify
+
+from app.models.Category import Category
 
 class UseCategoryController:
-   def store(self, userId, categoryName):
-      categoryId = connectionDB('addCategory', {
-         'userId': userId,
-         'categoryName': categoryName or 'Nova Categoria'
-      })
+   def store(self, userId):
 
-      return categoryId
+      requestData = json.loads(request.data)
 
-   def destore(self, userId, categoryId):
+      category = Category(requestData['categoryName'])
 
-      connectionDB('deleteCategory', {
-         'userId': userId,
-         'categoryId': categoryId
-      })
+      category.create(userId)
 
-   def updateStore(self, userId, requestData):
+      return jsonify({ 'state': 'success', 'categoryId': category.id }, 200)
 
-      connectionDB('updateCategory', {
-         'userId': userId,
-         'categoryId': requestData['categoryId'],
-         'newCategoryName': requestData['newCategoryName'] or 'Nova Categoria'
-      })
+   def destore(self, userId):
+
+      requestData = json.loads(request.data)
+
+      if not 'categoryId' in requestData:
+         return jsonify({ 'state': 'error', 'reason': 'no category id' }, 401)
+
+      category = Category()
+
+      category.id = requestData['categoryId']
+
+      category.delete(userId)
+
+      return jsonify({ 'state': 'success' }, 200)
+
+   def updateStore(self, userId):
+
+      requestData = json.loads(request.data)
+      
+      if not 'categoryId' in requestData:
+         return jsonify({ 'state': 'error', 'reason': 'no category id' }, 401)
+
+      category = Category(requestData['newCategoryName'])
+
+      category.id = requestData['categoryId']
+
+      category.update(userId)
+         
+      return jsonify({ 'state': 'success' }, 200)
 
    def getStore(self, userId):
 
-      allCurrentCategories = connectionDB('getCategories', { 'userId': userId })
+      category = Category()
 
-      return allCurrentCategories
+      allCategories = category.findAll(userId)
 
+      return jsonify({ 'state': 'success', 'categories': allCategories }, 200)
 
 CategoryController = UseCategoryController()

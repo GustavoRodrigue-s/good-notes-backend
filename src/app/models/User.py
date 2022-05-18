@@ -1,11 +1,9 @@
 from database.Database import Database
 
-from dotenv import load_dotenv
 import os
 
 from cryptocode import encrypt, decrypt
 
-load_dotenv()
 class User:
 
    def __init__(self, data):
@@ -18,7 +16,12 @@ class User:
 
    def validateSignUp(self):
 
-      errors = [*self.validateUsernameAndEmail()]
+      userEmailExists = self.findOne('email = %s', self.email)
+      userUsernameExists = self.findOne('username = %s', self.username)
+
+      errors = [
+         *self.validateUsernameAndEmail(userEmailExists, userUsernameExists)
+      ]
 
       if self.password == '' or self.confirmPassword == '':
          errors.append({'input': 'inputsPasswords', "reason": 'empty inputs'})
@@ -53,28 +56,25 @@ class User:
 
       return errors
 
-   def validateUsernameAndEmail(self):
-
-      userExistsWithEmail = self.findOneUser('email = %s', self.email)
-      userExistsWithUsername = self.findOneUser('username = %s', self.username)
-
+   def validateUsernameAndEmail(self, userEmailExists, userUsernameExists):
+      
       errors = []
 
       if self.email == '':
          errors.append({'input': 'inputEmail', 'reason': 'empty input'})
 
-      elif userExistsWithEmail:
+      elif userEmailExists:
          errors.append({'input': 'inputEmail', 'reason': 'email already exists'})
 
       if self.username == '':
          errors.append({'input': 'inputUsername', 'reason': 'empty input'})
 
-      elif userExistsWithUsername:
+      elif userUsernameExists:
          errors.append({'input': 'inputUsername', 'reason': 'username already exists'})
 
       return errors
 
-   def findOneUser(self, where, *value):
+   def findOne(self, where, *value):
 
       query = f'''SELECT * FROM users WHERE {where}'''
 
@@ -104,12 +104,29 @@ class User:
 
       Database.disconnect(cursor, connection)
 
-   # talvez tirar todos esses gets e usar o findOneUser
-   def getId(self):
+   def delete(self):
 
-      id = self.findOneUser('email = %s OR username = %s', self.email, self.email)[0]
+      query = '''
+         DELETE FROM notes WHERE user_id = %s;
+         DELETE FROM categories WHERE user_id = %s;
+         DELETE FROM users WHERE id = %s
+      '''
 
-      return id
+      cursor, connection = Database.connect()
+
+      cursor.execute(query, (self.id, self.id, self.id))
+
+      Database.disconnect(cursor, connection)
+
+   def updateUsernameAndEmail(self):
+
+      query = 'UPDATE users SET email = %s, username = %s WHERE id = %s'
+
+      cursor, connection = Database.connect()
+
+      cursor.execute(query, (self.email, self.username, self.id))
+
+      Database.disconnect(cursor, connection)
 
    def hashPassword(self):
       hashPassword = encrypt(self.password, os.environ.get('HASH_PASSWORD_KEY'))

@@ -7,10 +7,10 @@ sys.path.insert(1, './src')
 
 from app.controllers.AuthController import AuthController
 from app.controllers.UserController import UserController
-# from app.controllers.categoryController import CategoryController
-# from app.controllers.NotesController import NotesController
+from app.controllers.categoryController import CategoryController
+from app.controllers.NotesController import NotesController
 
-# from decorators import jwt_required
+from app.middlewares.authMiddleware import authMiddleware
 
 # separar de acordo com os controllers
 def createRoutes(app):
@@ -22,165 +22,71 @@ def createRoutes(app):
    def routeRegister():
       return UserController.store()
 
-   # @app.route('/auth', methods=['GET'])
-   # @jwt_required
-   # def routeTokenRequired(userId):
+   @app.route('/auth', methods=['GET'])
+   @authMiddleware
+   def routeTokenRequired(userId):
+      return jsonify({ "state": "authorized" }, 200)
 
-   #    return jsonify({ "state": "authorized" }, 200)
+   @app.route('/logout', methods=['GET'])
+   @authMiddleware
+   def routeLogoutUser(userId):
+      return AuthController.exitAuthentication(userId)
 
-   # @app.route('/logout', methods=['GET'])
-   # @jwt_required
-   # def routeLogoutUser(userId):
+   @app.route('/getCredentials', methods=['GET'])
+   @authMiddleware
+   def routeGetData(userId):
+      return UserController.getStore(userId)
 
-   #    AuthController.exitAuthentication(userId)
+   @app.route('/updateCredentials', methods=['POST'])
+   @authMiddleware
+   def routeUpdateCredentials(userId):
+      return UserController.updateStore(userId)
 
-   #    return jsonify({ 'state': 'success' }, 200)
+   @app.route('/deleteAccount', methods=['DELETE'])
+   @authMiddleware
+   def routeDeleteAccount(userId):
+      return UserController.destore(userId)
 
-   # @app.route('/getCredentials', methods=['GET'])
-   # @jwt_required
-   # def routeGetData(userId):
-   #    try:
-   #       userCredentials = UserController.getStore(userId)
+   # ----- Endpoints Categorys ------
 
-   #       return jsonify(
-   #          { 'state': 'success' ,'username': userCredentials[1], 'email': userCredentials[2] }, 200
-   #       )
-   #    except:
-   #       return jsonify({ "state": "unauthorized" }, 401)
+   @app.route('/addCategory', methods=['POST'])
+   @authMiddleware
+   def routeAddCategory(userId):
+      return CategoryController.store(userId)
 
-   # @app.route('/updateCredentials', methods=['POST'])
-   # @jwt_required
-   # def routeUpdateCredentials(userId):
+   @app.route('/deleteCategory', methods=['POST'])
+   @authMiddleware
+   def routeDeleteCategory(userId):
+      return CategoryController.destore(userId)
 
-   #    requestData = json.loads(request.data)
+   @app.route('/updateCategory', methods=['POST'])
+   @authMiddleware
+   def routeUpdateCategory(userId):
+      return CategoryController.updateStore(userId)
 
-   #    try: 
-   #       response = UserController.updateStore(userId, requestData)
-
-   #       return jsonify({
-   #          'state': 'success',
-   #          'newDatas': response
-   #       }, 200)
-
-   #    except Exception as e:
-   #       respData = [e.args[0]] if type(e.args[0]) != list else e.args[0]
-
-   #       return jsonify({'state': 'error', 'reason': respData}, 403)
-
-   # @app.route('/deleteAccount', methods=['DELETE'])
-   # def routeDeleteAccount(userId):
-   #    try:
-   #       UserController.destore(userId)
-
-   #       return jsonify({'state': 'success'}, 200)
-   #    except Exception as e:
-   #       return jsonify({'state': 'error', 'reason': f'{e}'}, 401)
-
-   # # ----- Endpoints Categorys ------
-
-   # @app.route('/addCategory', methods=['POST'])
-   # @jwt_required
-   # def routeAddCategory(userId):
-   #    requestData = json.loads(request.data)
-
-   #    try:
-   #       categoryName = requestData['categoryName']
-
-   #       categoryId = CategoryController.store(userId, categoryName)
-
-   #       return jsonify({'state': 'success', 'categoryId': categoryId}, 200)
-   #    except Exception as e:
-   #       return jsonify({'state': 'error', 'reason': 'no category name'}, 401)
-
-   # @app.route('/deleteCategory', methods=['POST'])
-   # @jwt_required
-   # def routeDeleteCategory(userId):
-   #    requestData = json.loads(request.data)
-
-   #    try:
-   #       categoryId = requestData['categoryId']
-
-   #       CategoryController.destore(userId, categoryId)
-
-   #       return jsonify({'state': 'success'}, 200)
-   #    except Exception as e:
-   #       return jsonify({'state': 'error', 'reason': 'no category id'}, 401)
-
-   # @app.route('/updateCategory', methods=['POST'])
-   # @jwt_required
-   # def routeUpdateCategory(userId):
-   #    requestData = json.loads(request.data)
-
-   #    try:
-   #       CategoryController.updateStore(userId, requestData)
-
-   #       return jsonify({'state': 'success'}, 200)
-   #    except Exception as e:
-   #       return jsonify({'state': 'error', 'reason': 'no category id or new category name'}, 401)
-
-   # @app.route('/getCategories', methods=['GET'])
-   # @jwt_required
-   # def routeGetCategories(userId):
-   #    try:
-   #       allCategories =  CategoryController.getStore(userId)
-
-   #       return jsonify({ 'state': 'success', 'categories': allCategories }, 200)
-   #    except Exception as e:
-   #       return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
+   @app.route('/getCategories', methods=['GET'])
+   @authMiddleware
+   def routeGetCategories(userId):
+      return CategoryController.getStore(userId)
       
    # # ----- Endpoints Notes ------
 
-   # @app.route('/getNotes', methods=['POST'])
-   # @jwt_required
-   # def routeGetNotes(userId):
-   #    requestData = json.loads(request.data)
+   @app.route('/getNotes', methods=['POST'])
+   @authMiddleware
+   def routeGetNotes(userId):
+      return NotesController.getStore(userId)
 
-   #    try:
-   #       categoryId = requestData['categoryId']
+   @app.route('/addNote', methods=['POST'])
+   @authMiddleware
+   def routeAddNote(userId):
+      return NotesController.store(userId)
 
-   #       allNotes = NotesController.getStore(userId, categoryId)
+   @app.route('/deleteNote', methods=['POST'])
+   @authMiddleware
+   def routeDeleteNote(userId):
+      return NotesController.destore(userId)
 
-   #       return jsonify({ 'state': 'success', 'notes': allNotes }, 200)
-   #    except Exception as e:
-   #       return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
-
-   # @app.route('/addNote', methods=['POST'])
-   # @jwt_required
-   # def routeAddNote(userId):
-   #    requestData = json.loads(request.data)
-
-   #    try:
-   #       currentCategoryId = requestData['categoryId']
-
-   #       noteDatas = NotesController.store(userId, currentCategoryId)
-
-   #       return jsonify({ 'state': 'success', 'noteData': noteDatas }, 200)
-   #    except Exception as e:
-   #       return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
-
-   # @app.route('/deleteNote', methods=['POST'])
-   # @jwt_required
-   # def routeDeleteNote(userId):
-   #    requestData = json.loads(request.data)
-
-   #    try:
-   #       noteId = requestData['noteId']
-   #       categoryId = requestData['categoryId']
-
-   #       NotesController.destore(noteId, categoryId, userId)
-
-   #       return jsonify({ 'state': 'success' }, 200)
-   #    except Exception as e:
-   #       return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
-
-   # @app.route('/updateNote', methods=['POST'])
-   # @jwt_required
-   # def routeUpdateNote(userId):
-      requestData = json.loads(request.data)
-
-      try:
-         lastModification = NotesController.updateStore(userId, requestData)
-
-         return jsonify({ 'state': 'success', 'lastModification': lastModification }, 200)
-      except Exception as e:
-         return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
+   @app.route('/updateNote', methods=['POST'])
+   @authMiddleware
+   def routeUpdateNote(userId):
+      return NotesController.updateStore(userId)

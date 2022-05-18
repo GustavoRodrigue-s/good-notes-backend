@@ -1,66 +1,101 @@
-from database.Database import connectionDB
-from app.models.App import App 
+from flask import request, json, jsonify
+
+from app.models.Note import Note
+from app.models.Category import Category
 
 class UseNotesController:
-   def getStore(self, userId, categoryId):
+   def store(self, userId):
 
-      allNotes = connectionDB('getNotes', {
-         'categoryId': categoryId,
-         'userId': userId
-      })
+      requestData = json.loads(request.data)
 
-      def noteFormated(data):
+      if not 'categoryId' in requestData:
+         return jsonify({ 'state': 'error', 'reason': 'no category id' }, 401)
+
+      note = Note()
+      category = Category()
+
+      category.id = requestData['categoryId']
+
+      note.create(category.id, userId)
+      category.updateLastModification(userId)
+
+      return jsonify({ 
+         'state': 'success', 
+         'noteData': {
+            'id': note.id,
+            'dateCreated': note.dateCreated,
+            'lastModification': note.lastModification
+         } 
+      }, 200)
+
+   def destore(self, userId):
+
+      requestData = json.loads(request.data)
+
+      if not 'categoryId' in requestData or not 'noteId' in requestData:
+         return jsonify({ 'state': 'error', 'reason': 'no note id or category id' }, 401)
+
+      note = Note()
+      category = Category()
+
+      note.id = requestData['noteId']
+      category.id = requestData['categoryId']
+
+      note.delete(category.id, userId)
+      category.updateLastModification(userId)
+
+      return jsonify({ 'state': 'success' }, 200)
+
+   def getStore(self, userId):
+
+      requestData = json.loads(request.data)
+
+      if not 'categoryId' in requestData:
+         return jsonify({ 'state': 'error', 'reason': 'no category id' }, 401)
+
+      note = Note()
+
+      categoryId = requestData['categoryId']
+
+      allNotes = note.findAll(categoryId, userId)
+
+      def formatNotes(noteData):
          return { 
-            'id': data[0],
-            'categoryId': data[1],
-            'title': data[2],
-            'summary': data[3],
-            'content': data[4],
-            'dateCreated': data[5],
-            'lastModification': data[6]
+            'id': noteData[0],
+            'categoryId': noteData[1],
+            'title': noteData[2],
+            'summary': noteData[3],
+            'content': noteData[4],
+            'dateCreated': noteData[5],
+            'lastModification': noteData[6]
          }
 
-      allNotesFormated = list(map(noteFormated, allNotes))
+      allNotesFormated = list(map(formatNotes, allNotes)) if allNotes else allNotes
 
-      return allNotesFormated
+      return jsonify({ 'state': 'success', 'notes': allNotesFormated }, 200)
 
-   def store(self, userId, categoryId):
+   def updateStore(self, userId):
 
-      noteDatas = connectionDB('insertNote', {
-         'categoryId': categoryId,
-         'userId': userId,
-      })
+      requestData = json.loads(request.data)
 
-      noteDataFormated = { 
-         'id': noteDatas[0],
-         'dateCreated': noteDatas[1],
-         'lastModification': noteDatas[2] 
-      }
-      
-      return noteDataFormated
+      if not 'id' in requestData or not 'categoryId' in requestData:
+         return jsonify({ 'state': 'error', 'reason': 'no note id or category id' }, 401)
 
-   def destore(self, noteId, categoryId, userId):
+      note = Note(requestData['title'], requestData['summary'], requestData['content'])
+      category = Category()
 
-      connectionDB('deleteNote', {
-         'noteId': noteId,
-         'categoryId': categoryId,
-         'userId': userId
-      })
+      note.id = requestData['id']
+      category.id = requestData['categoryId']
 
-   def updateStore(self, userId, requestData):
+      hasSomeError = note.validateNoteUpdate()
 
-      App.checkNoteErros(requestData)
+      if hasSomeError:
+         return jsonify({ 'state': 'error', 'reason': hasSomeError }, 401)
 
-      newLastModification = connectionDB('updateNote', {
-         'noteId': requestData['id'],
-         'categoryId': requestData['categoryId'],
-         'userId': userId,
-         'newTitle': requestData['title'],
-         'newContent': requestData['content'],
-         'newSummary': requestData['summary'],
-      })
+      note.update(category.id, userId)
+      category.updateLastModification(userId)
 
-      return newLastModification
+      return jsonify({ 'state': 'success', 'lastModification': note.lastModification }, 200)
 
 
 NotesController = UseNotesController()

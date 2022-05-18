@@ -28,43 +28,55 @@ class UseUserController():
          }, 200
       )
 
-
    def destore(self, userId):
 
-      # connectionDB('deleteUser', { 'userId': userId })
-      return 'rtest'
+      user = User({})
+
+      user.id = userId
+      
+      user.delete()
+
+      return jsonify({ 'state': 'success' }, 200)
 
    def getStore(self, userId):
 
-      # userCredentials = connectionDB('getOneUser', {
-      #    'item': '*',
-      #    'condition': "id = %s",
-      #    'datas': (userId, )
-      # })
+      user = User({})
 
-      return 'userCredentials'
+      credentials = user.findOne('id = %s', userId)
 
-   def updateStore(self, userId, newCredentials):
+      return jsonify(
+         { 
+            'state': 'success',
+            'username': credentials[1],
+            'email': credentials[2] 
+         }, 200
+      )
 
-      # user = User(requestData) // usar isto
+   def updateStore(self, userId):
 
-      newCredentials['id'] = userId
+      requestData = json.loads(request.data)
 
-      # user.validateUsernameAndEmail()
+      user = User(requestData)
 
-      # hasUserWithSomeCredentials = connectionDB('getUserWithSomeCredentials', {
-      #    'condition1': "email = %s AND id <> %s",
-      #    'datas1': (newCredentials['email'], userId),
-      #    'condition2': "username = %s AND id <> %s",
-      #    'datas2': (newCredentials['username'], userId)
-      # })
+      user.id = userId
 
-      App.checkProfileErrors(newCredentials, hasUserWithSomeCredentials)
+      userEmailExists = user.findOne('email = %s AND id <> %s', user.email, user.id)
+      userUsernameExists = user.findOne('username = %s AND id <> %s', user.username, user.id)
 
-      # n faz sentido retornar o mesmo valor do newCredentials
-      # newUserCredentials = connectionDB('updateUser', newCredentials)
+      hasSomeError = user.validateUsernameAndEmail(userEmailExists, userUsernameExists)
 
-      return { 'email': newUserCredentials[0], 'username': newUserCredentials[1] }
+      if hasSomeError:
+         return jsonify({ 'state': 'error', 'reason': hasSomeError }, 403)
+
+      user.updateUsernameAndEmail()
+
+      return jsonify({
+         'state': 'success',
+         'newDatas': {
+            'email': user.email,
+            'username': user.username 
+         }
+      }, 200)
 
 
 UserController = UseUserController()
