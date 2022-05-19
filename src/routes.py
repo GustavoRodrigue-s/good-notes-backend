@@ -7,7 +7,7 @@ sys.path.insert(1, './src')
 
 from app.controllers.AuthController import AuthController
 from app.controllers.UserController import UserController
-from app.controllers.categoryController import CategoryController
+from app.controllers.CategoryController import CategoryController
 from app.controllers.NotesController import NotesController
 
 from app.middlewares.authMiddleware import authMiddleware
