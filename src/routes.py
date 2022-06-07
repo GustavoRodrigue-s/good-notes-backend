@@ -1,7 +1,6 @@
-from flask import request, json, jsonify
+from flask import jsonify
 
 import sys
-from app.controllers.AuthController import AuthController
 
 sys.path.insert(1, './src')
 
@@ -12,7 +11,6 @@ from app.controllers.NotesController import NotesController
 
 from app.middlewares.authMiddleware import authMiddleware
 
-# separar de acordo com os controllers
 def createRoutes(app):
    @app.route('/login', methods=['POST'])
    def routeLogin():
@@ -32,7 +30,7 @@ def createRoutes(app):
    def routeLogoutUser(userId):
       return AuthController.exitAuthentication(userId)
 
-   @app.route('/getCredentials', methods=['GET'])
+   @app.route('/getProfile', methods=['GET'])
    @authMiddleware
    def routeGetData(userId):
       return UserController.getStore(userId)
@@ -41,6 +39,11 @@ def createRoutes(app):
    @authMiddleware
    def routeUpdateCredentials(userId):
       return UserController.updateStore(userId)
+
+   @app.route('/uploadPhoto', methods=['POST'])
+   @authMiddleware
+   def routeUpload(userId):
+      return UserController.uploadPhoto(userId)
 
    @app.route('/deleteAccount', methods=['DELETE'])
    @authMiddleware

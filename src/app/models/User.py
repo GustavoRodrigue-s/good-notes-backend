@@ -4,6 +4,9 @@ import os
 
 from cryptocode import encrypt, decrypt
 
+MAXIMUM_PHOTO_SIZE = 1 * 1024 * 1024 # 1MB
+ALLOWED_EXTENSIONS = ['image/png', 'image/jpg', 'image/jpeg']
+
 class User:
 
    def __init__(self, data):
@@ -74,6 +77,14 @@ class User:
 
       return errors
 
+   def validatePhotoUpload(self, photoData):
+
+      if not photoData['type'] in ALLOWED_EXTENSIONS:
+         raise Exception('image type not allowed')
+
+      if photoData['size'] > MAXIMUM_PHOTO_SIZE:
+         raise Exception('maximum photo size')
+
    def findOne(self, where, *value):
 
       query = f'''SELECT * FROM users WHERE {where}'''
@@ -120,6 +131,18 @@ class User:
 
       try:
          cursor.execute(query, (self.id, self.id, self.id))
+
+      finally:
+         Database.disconnect(cursor, connection)
+
+   def uploadPhoto(self, fileName):
+
+      query = '''UPDATE users SET photo = %s WHERE id = %s'''
+
+      cursor, connection = Database.connect()
+
+      try:
+         cursor.execute(query, (fileName, self.id))
 
       finally:
          Database.disconnect(cursor, connection)
