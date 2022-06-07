@@ -6,6 +6,8 @@ import base64, hashlib, os
 
 from app.controllers.AuthController import AuthController
 
+directory = os.getcwd() + '\\src\\uploads\\'
+
 class UseUserController():
    def store(self):
       try:
@@ -71,18 +73,15 @@ class UseUserController():
 
    def getPhoto(self, photoName):
       
-      imgExtension = photoName.split('.')[1]
+      photoExtension = photoName.split('.')[1]
 
-      directory = os.path.join(os.getcwd() + '\\src\\uploads\\', photoName)
-      imgData = open(directory, 'rb')
+      photoPath = os.path.join(directory, photoName)
+      photoBytes = open(photoPath, 'rb')
 
-      if not imgData:
-         return None
+      photoInBase64 = base64.b64encode(photoBytes.read())
+      photoFormated = f'data:image/{photoExtension};base64,{photoInBase64}'.replace("b'", '').replace("'", '')
 
-      imgBase64 = base64.b64encode(imgData.read())
-      imgFormated = f'data:image/{imgExtension};base64,{imgBase64}'.replace("b'", '').replace("'", '')
-
-      return imgFormated
+      return photoFormated
 
    def updateStore(self, userId):
       try:
@@ -90,7 +89,6 @@ class UseUserController():
          requestData = json.loads(request.data)
 
          user = User(requestData)
-
          user.id = userId
 
          userEmailExists = user.findOne('email = %s AND id <> %s', user.email, user.id)
@@ -124,23 +122,20 @@ class UseUserController():
 
          user.validatePhotoUpload(photoDatas)
 
-         photoBase64 = photoDatas['photo'].split('base64,')[1]
-         photoBytes = base64.b64decode(photoBase64)
+         photoBytes = base64.b64decode(photoDatas['photo'].split('base64,')[1])
+         photoName = hashlib.md5(os.urandom(16)).hexdigest() + photoDatas['name']
 
-         filename = hashlib.md5(os.urandom(16)).hexdigest() + photoDatas['name']
+         lastPhotoPath = user.findOne('id = %s', user.id)[4]
 
-         lastPhotoName = user.findOne('id = %s', user.id)[4]
+         user.uploadPhoto(photoName)
 
-         user.uploadPhoto(filename)
-
-         directory = os.getcwd() + '\\src\\uploads\\'
-         newPhoto = os.path.join(directory, filename)
-
-         if lastPhotoName:
-            oldPhoto = os.path.join(directory, lastPhotoName)
+         if lastPhotoPath:
+            oldPhoto = os.path.join(directory, lastPhotoPath)
             os.remove(oldPhoto)
          
-         with open(newPhoto, 'wb') as photo:
+         newPhotoPath = os.path.join(directory, photoName)
+
+         with open(newPhotoPath, 'wb') as photo:
             photo.write(photoBytes) 
 
          return jsonify({ 'state': 'success' }, 200)
