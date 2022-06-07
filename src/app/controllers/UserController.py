@@ -6,7 +6,7 @@ import base64, hashlib, os
 
 from app.controllers.AuthController import AuthController
 
-directory = os.getcwd() + '\\src\\uploads\\'
+directory = os.getcwd() + '\\uploads\\'
 
 class UseUserController():
    def store(self):
