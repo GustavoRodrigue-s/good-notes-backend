@@ -18,6 +18,7 @@ class UseDatabase:
             username          VARCHAR(255) NOT NULL,
             email             VARCHAR(255) NOT NULL,
             password          VARCHAR(255)  NOT NULL,
+            photo             VARCHAR(255),
             datetime          TIMESTAMPTZ DEFAULT NOW(),
             PRIMARY KEY (id)
          );
