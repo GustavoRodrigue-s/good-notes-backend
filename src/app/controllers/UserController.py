@@ -40,8 +40,14 @@ class UseUserController():
       try:
 
          user = User({})
-
          user.id = userId
+
+         # talvez add isso no models direto no delete 
+         photo = user.findOne('id = %s', user.id)[4]
+
+         if photo:
+            photoPath = os.path.join(directory, photo)
+            os.remove(photoPath)
          
          user.delete()
 
