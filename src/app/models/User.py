@@ -6,21 +6,12 @@ from cryptocode import encrypt, decrypt
 
 from dotenv import load_dotenv
 
+from src.services.PhotoUploader import PhotoUploader
+
 load_dotenv()
 
 MAXIMUM_PHOTO_SIZE = 1 * 1024 * 1024 # 1MB
 ALLOWED_EXTENSIONS = ['image/png', 'image/jpg', 'image/jpeg']
-
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
-
-cloudinary.config( 
-  cloud_name = os.environ.get('CLOUDINARY_NAME'), 
-  api_key = os.environ.get('CLOUDINARY_API_KEY'), 
-  api_secret = os.environ.get('CLOUDINARY_API_SECRET'),
-  secure = True
-)
 
 class User:
 
@@ -136,10 +127,10 @@ class User:
 
    def delete(self):
 
-      userPhotoName = self.findOne('id = %s', self.id)[4]
+      photoId = self.findOne('id = %s', self.id)[4]
 
-      if userPhotoName:
-         cloudinary.uploader.destroy(f'uploads/{userPhotoName}')
+      if photoId:
+         PhotoUploader.delete(photoId)
 
       query = '''
          DELETE FROM notes WHERE user_id = %s;
@@ -155,27 +146,21 @@ class User:
       finally:
          Database.disconnect(cursor, connection)
 
-   def uploadPhoto(self, fileName, photoName):
-
-      photo = cloudinary.uploader.upload(
-         fileName,
-         folder = 'uploads',
-         public_id = photoName
-      )
-
-      photoUrl = photo.get('secure_url')
+   def uploadPhoto(self, photoUrl, photoId):
+      
+      urlOfTheUploadedPhoto = PhotoUploader.create(photoUrl, photoId)
 
       query = '''UPDATE users SET photo = %s WHERE id = %s'''
 
       cursor, connection = Database.connect()
 
       try:
-         cursor.execute(query, (photoName, self.id))
+         cursor.execute(query, (photoId, self.id))
 
       finally:
          Database.disconnect(cursor, connection)
 
-      return photoUrl
+      return urlOfTheUploadedPhoto
 
    def updateUsernameAndEmail(self):
 

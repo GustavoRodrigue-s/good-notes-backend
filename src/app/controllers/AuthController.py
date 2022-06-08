@@ -1,6 +1,6 @@
 from flask import request, json, jsonify
 
-from services.jwtService import decodeToken, generateToken
+from services.JwtProvider import JwtProvider
 
 from dotenv import load_dotenv
 import os
@@ -47,10 +47,11 @@ class UseAuthController():
          if user.id in sessionIdBlackList:
             sessionIdBlackList.remove(user.id)
 
-         accessToken = generateToken(user.id, os.environ.get('ACCESS_TOKEN_KEY'), 10)
+         accessToken = JwtProvider.createToken(user.id, os.environ.get('ACCESS_TOKEN_KEY'), 10)
 
-         refreshToken = generateToken(
-            user.id, os.environ.get('REFRESH_TOKEN_KEY'), 43200 if user.keepConnected else 1440
+         refreshToken = JwtProvider.createToken(
+            user.id, os.environ.get('REFRESH_TOKEN_KEY'),
+            43200 if user.keepConnected else 1440
          )
 
          return accessToken, refreshToken
@@ -61,12 +62,12 @@ class UseAuthController():
    def restoreAuthentication(self, refreshToken):
       try:
 
-         userId = decodeToken(refreshToken, os.environ.get('REFRESH_TOKEN_KEY'))['id']
+         userId = JwtProvider.readToken(refreshToken, os.environ.get('REFRESH_TOKEN_KEY'))['id']
 
          if userId in sessionIdBlackList:
             raise Exception('the session is not valid')
 
-         newAccessToken = generateToken(userId, os.environ.get('ACCESS_TOKEN_KEY'), 10)
+         newAccessToken = JwtProvider.createToken(userId, os.environ.get('ACCESS_TOKEN_KEY'), 10)
 
          return newAccessToken
 

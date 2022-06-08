@@ -109,9 +109,9 @@ class UseUserController():
 
          userPhotoName = user.findOne('id = %s', user.id)[4]
 
-         photoName = userPhotoName or f'{hashlib.md5(os.urandom(16)).hexdigest()}-{userId}'
+         photoId = userPhotoName or f'{hashlib.md5(os.urandom(16)).hexdigest()}-{userId}'
 
-         photoUrl = user.uploadPhoto(photoDatas['photo'], photoName)
+         photoUrl = user.uploadPhoto(photoDatas['photo'], photoId)
 
          return jsonify({ 'state': 'success', 'photoData': photoUrl }, 200)
 
