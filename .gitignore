@@ -2,5 +2,3 @@ Pipfile
 Pipfile.lock
 api/__pycache__
 .env
-uploads/*
-!uploads/.gitkeep
