@@ -6,7 +6,7 @@ from cryptocode import encrypt, decrypt
 
 from dotenv import load_dotenv
 
-from src.services.PhotoUploader import PhotoUploader
+from services.PhotoUploader import PhotoUploader
 
 load_dotenv()
 
@@ -127,7 +127,7 @@ class User:
 
    def delete(self):
 
-      photoId = self.findOne('id = %s', self.id)[4]
+      photoId = self.findOne('id = %s', self.id)[5]
 
       if photoId:
          PhotoUploader.delete(photoId)
@@ -146,21 +146,23 @@ class User:
       finally:
          Database.disconnect(cursor, connection)
 
-   def uploadPhoto(self, photoUrl, photoId):
+   def uploadPhoto(self, photoUrl):
       
-      urlOfTheUploadedPhoto = PhotoUploader.create(photoUrl, photoId)
+      existingPhotoId = self.findOne('id = %s', self.id)[5]
 
-      query = '''UPDATE users SET photo = %s WHERE id = %s'''
+      url, id = PhotoUploader.update(photoUrl, existingPhotoId) if existingPhotoId else PhotoUploader.create(photoUrl)
+
+      query = '''UPDATE users SET photo_url = %s, photo_id = %s WHERE id = %s'''
 
       cursor, connection = Database.connect()
 
       try:
-         cursor.execute(query, (photoId, self.id))
+         cursor.execute(query, (url, id, self.id))
 
       finally:
          Database.disconnect(cursor, connection)
 
-      return urlOfTheUploadedPhoto
+      return url
 
    def updateUsernameAndEmail(self):
 

@@ -14,15 +14,23 @@ cloudinary.config(
 )
 
 class UsePhotoUploader:
-   def create(self, fileName, id):
+   def create(self, url):
+
+      photo = cloudinary.uploader.upload(url, folder = "uploads")
+
+      photoId = photo.get('public_id').split('/')[1]
+
+      return photo.get('secure_url'), photoId
+
+   def update(self, url, id):
 
       photo = cloudinary.uploader.upload(
-         fileName,
+         url,
          folder = 'uploads',
          public_id = id
       )
 
-      return photo.get('secure_url')
+      return photo.get('secure_url'), id
 
    def delete(self, id):
 

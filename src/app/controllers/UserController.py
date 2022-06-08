@@ -2,8 +2,6 @@ from flask import request, json, jsonify
 
 from app.models.User import User
 
-import hashlib, os
-
 from app.controllers.AuthController import AuthController
 
 class UseUserController():
@@ -54,14 +52,12 @@ class UseUserController():
 
          credentials = user.findOne('id = %s', userId)
 
-         photoUrl = f'https://res.cloudinary.com/gustavorodriguesfabiano/image/upload/v1654674795/uploads/{credentials[4]}' if credentials[4] else None
-
          return jsonify(
             { 
                'state': 'success',
                'username': credentials[1],
                'email': credentials[2],
-               'photo': photoUrl
+               'photo': credentials[4]
             }, 200
          )
 
@@ -107,11 +103,7 @@ class UseUserController():
 
          user.validatePhotoUpload(photoDatas)
 
-         userPhotoName = user.findOne('id = %s', user.id)[4]
-
-         photoId = userPhotoName or f'{hashlib.md5(os.urandom(16)).hexdigest()}-{userId}'
-
-         photoUrl = user.uploadPhoto(photoDatas['photo'], photoId)
+         photoUrl = user.uploadPhoto(photoDatas['photo'])
 
          return jsonify({ 'state': 'success', 'photoData': photoUrl }, 200)
 
