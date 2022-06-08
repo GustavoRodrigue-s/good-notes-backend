@@ -2,13 +2,9 @@ from flask import request, json, jsonify
 
 from app.models.User import User
 
-import base64, hashlib, os
+import hashlib, os
 
 from app.controllers.AuthController import AuthController
-
-directory = os.path.join(os.path.abspath('../'), 'uploads')
-
-print(directory)
 
 class UseUserController():
    def store(self):
@@ -43,13 +39,6 @@ class UseUserController():
 
          user = User({})
          user.id = userId
-
-         # talvez add isso no models direto no delete 
-         photo = user.findOne('id = %s', user.id)[4]
-
-         if photo:
-            photoPath = os.path.join(directory, photo)
-            os.remove(photoPath)
          
          user.delete()
 
@@ -65,31 +54,19 @@ class UseUserController():
 
          credentials = user.findOne('id = %s', userId)
 
-         photo = self.getPhoto(credentials[4]) if credentials[4] else None
+         photoUrl = f'https://res.cloudinary.com/gustavorodriguesfabiano/image/upload/v1654674795/uploads/{credentials[4]}' if credentials[4] else None
 
          return jsonify(
             { 
                'state': 'success',
                'username': credentials[1],
                'email': credentials[2],
-               'photo': photo
+               'photo': photoUrl
             }, 200
          )
 
       except Exception as e:
          return jsonify({ "state": "error", 'reason': f'{e}' }, 401)
-
-   def getPhoto(self, photoName):
-      
-      photoExtension = photoName.split('.')[1]
-
-      photoPath = os.path.join(directory, photoName)
-      photoBytes = open(photoPath, 'rb')
-
-      photoInBase64 = base64.b64encode(photoBytes.read())
-      photoFormated = f'data:image/{photoExtension};base64,{photoInBase64}'.replace("b'", '').replace("'", '')
-
-      return photoFormated
 
    def updateStore(self, userId):
       try:
@@ -130,23 +107,13 @@ class UseUserController():
 
          user.validatePhotoUpload(photoDatas)
 
-         photoBytes = base64.b64decode(photoDatas['photo'].split('base64,')[1])
-         photoName = hashlib.md5(os.urandom(16)).hexdigest() + photoDatas['name']
+         userPhotoName = user.findOne('id = %s', user.id)[4]
 
-         lastPhotoPath = user.findOne('id = %s', user.id)[4]
+         photoName = userPhotoName or f'{hashlib.md5(os.urandom(16)).hexdigest()}-{userId}'
 
-         user.uploadPhoto(photoName)
+         photoUrl = user.uploadPhoto(photoDatas['photo'], photoName)
 
-         if lastPhotoPath:
-            oldPhoto = os.path.join(directory, lastPhotoPath)
-            os.remove(oldPhoto)
-         
-         newPhotoPath = os.path.join(directory, photoName)
-
-         with open(newPhotoPath, 'wb') as photo:
-            photo.write(photoBytes) 
-
-         return jsonify({ 'state': 'success' }, 200)
+         return jsonify({ 'state': 'success', 'photoData': photoUrl }, 200)
 
       except Exception as e:
          return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
