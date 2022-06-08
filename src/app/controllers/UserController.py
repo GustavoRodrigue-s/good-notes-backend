@@ -8,6 +8,8 @@ from app.controllers.AuthController import AuthController
 
 directory = os.path.abspath('uploads')
 
+print(directory)
+
 class UseUserController():
    def store(self):
       try:
