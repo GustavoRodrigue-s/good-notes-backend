@@ -6,7 +6,7 @@ import base64, hashlib, os
 
 from app.controllers.AuthController import AuthController
 
-directory = os.path.abspath('uploads')
+directory = os.path.join(os.path.abspath('./'), 'uploads')
 
 print(directory)
 
