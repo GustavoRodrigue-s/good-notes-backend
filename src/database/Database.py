@@ -18,7 +18,8 @@ class UseDatabase:
             username          VARCHAR(255) NOT NULL,
             email             VARCHAR(255) NOT NULL,
             password          VARCHAR(255)  NOT NULL,
-            photo             VARCHAR,
+            photo_url         VARCHAR,
+            photo_id          VARCHAR,
             datetime          TIMESTAMPTZ DEFAULT NOW(),
             PRIMARY KEY (id)
          );
@@ -69,6 +70,7 @@ class UseDatabase:
       return cursor, dbConnection
    
    def disconnect(self, cursor, dbConnection):
+      
       dbConnection.commit()
       cursor.close()
       dbConnection.close()
