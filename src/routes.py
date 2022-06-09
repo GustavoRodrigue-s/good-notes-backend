@@ -20,15 +20,15 @@ def createRoutes(app):
    def routeRegister():
       return UserController.store()
 
-   @app.route('/auth', methods=['GET'])
-   @authMiddleware
-   def routeTokenRequired(userId):
-      return jsonify({ "state": "authorized" }, 200)
-
    @app.route('/logout', methods=['GET'])
    @authMiddleware
    def routeLogoutUser(userId):
       return AuthController.exitAuthentication(userId)
+
+   @app.route('/auth', methods=['GET'])
+   @authMiddleware
+   def routeTokenRequired(userId):
+      return UserController.getStore(userId)
 
    @app.route('/getProfile', methods=['GET'])
    @authMiddleware
