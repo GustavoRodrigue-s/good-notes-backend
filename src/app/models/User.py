@@ -91,6 +91,27 @@ class User:
       if photoData['size'] > MAXIMUM_PHOTO_SIZE:
          raise Exception('maximum photo size')
 
+   def validateUpdatePassword(self, newPassword):
+
+      userExists = self.findOne('id = %s', self.id)
+      decodedPassword = self.decryptHashPassword(userExists[3])
+
+      errors = []
+
+      if self.password == '':
+         errors.append({ 'input': 'inputOldPassword', 'reason': 'empty input' })
+
+      elif self.password != decodedPassword:
+         errors.append({ 'input': 'inputOldPassword', 'reason': 'wrong old password' })
+
+      if newPassword == '':
+         errors.append({ 'input': 'inputNewPassword', 'reason': 'empty input' })
+
+      if not userExists:
+         errors.append({ 'reason': 'user with id not found' })
+
+      return errors
+
    def findOne(self, where, *value):
 
       query = f'''SELECT * FROM users WHERE {where}'''
@@ -172,6 +193,18 @@ class User:
 
       try:
          cursor.execute(query, (self.email, self.username, self.id))
+
+      finally:
+         Database.disconnect(cursor, connection)
+
+   def updatePassword(self):
+
+      query = 'UPDATE users SET password = %s WHERE id = %s'
+
+      cursor, connection = Database.connect()
+
+      try:
+         cursor.execute(query, (self.password, self.id))
 
       finally:
          Database.disconnect(cursor, connection)
