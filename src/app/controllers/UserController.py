@@ -78,7 +78,7 @@ class UseUserController():
          hasSomeError = user.validateUsernameAndEmail(userEmailExists, userUsernameExists)
 
          if hasSomeError:
-            return jsonify({ 'state': 'error', 'reason': hasSomeError }, 403)
+            return jsonify({ 'state': 'error', 'errors': hasSomeError }, 403)
 
          user.updateUsernameAndEmail()
 
@@ -92,6 +92,29 @@ class UseUserController():
 
       except Exception as e:
          return jsonify({ "state": "error", 'reason': f'{e}' }, 401)
+
+   def updatePassword(self, userId):
+      try:
+
+         requestData = json.loads(request.data)
+
+         user = User({ 'password': requestData['oldPassword'] })
+         user.id = userId
+
+         hasSomeError = user.validateUpdatePassword(requestData['newPassword'])
+
+         if hasSomeError:
+            return jsonify({ 'errors': hasSomeError, 'state': 'error' }, 401)
+
+         user.password = requestData['newPassword']
+         user.hashPassword()
+
+         user.updatePassword()
+
+         return jsonify({ 'state': 'success' }, 200)
+
+      except Exception as e:
+         return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 
    def uploadPhoto(self, userId):
       try:

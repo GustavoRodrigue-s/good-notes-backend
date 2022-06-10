@@ -40,6 +40,11 @@ def createRoutes(app):
    def routeUpdateCredentials(userId):
       return UserController.updateStore(userId)
 
+   @app.route('/updatePassword', methods=['POST'])
+   @authMiddleware
+   def routeUpdatePassword(userId):
+      return UserController.updatePassword(userId)
+
    @app.route('/uploadPhoto', methods=['POST'])
    @authMiddleware
    def routeUpload(userId):
