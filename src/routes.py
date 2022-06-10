@@ -35,12 +35,12 @@ def createRoutes(app):
    def routeGetData(userId):
       return UserController.getStore(userId)
 
-   @app.route('/updateCredentials', methods=['POST'])
+   @app.route('/updateCredentials', methods=['PUT'])
    @authMiddleware
    def routeUpdateCredentials(userId):
       return UserController.updateStore(userId)
 
-   @app.route('/updatePassword', methods=['POST'])
+   @app.route('/updatePassword', methods=['PUT'])
    @authMiddleware
    def routeUpdatePassword(userId):
       return UserController.updatePassword(userId)
@@ -62,12 +62,12 @@ def createRoutes(app):
    def routeAddCategory(userId):
       return CategoryController.store(userId)
 
-   @app.route('/deleteCategory', methods=['POST'])
+   @app.route('/deleteCategory', methods=['DELETE'])
    @authMiddleware
    def routeDeleteCategory(userId):
       return CategoryController.destore(userId)
 
-   @app.route('/updateCategory', methods=['POST'])
+   @app.route('/updateCategory', methods=['PUT'])
    @authMiddleware
    def routeUpdateCategory(userId):
       return CategoryController.updateStore(userId)
@@ -79,7 +79,7 @@ def createRoutes(app):
       
    # # ----- Endpoints Notes ------
 
-   @app.route('/getNotes', methods=['POST'])
+   @app.route('/getNotes', methods=['GET'])
    @authMiddleware
    def routeGetNotes(userId):
       return NotesController.getStore(userId)
@@ -89,12 +89,12 @@ def createRoutes(app):
    def routeAddNote(userId):
       return NotesController.store(userId)
 
-   @app.route('/deleteNote', methods=['POST'])
+   @app.route('/deleteNote', methods=['DELETE'])
    @authMiddleware
    def routeDeleteNote(userId):
       return NotesController.destore(userId)
 
-   @app.route('/updateNote', methods=['POST'])
+   @app.route('/updateNote', methods=['PUT'])
    @authMiddleware
    def routeUpdateNote(userId):
       return NotesController.updateStore(userId)

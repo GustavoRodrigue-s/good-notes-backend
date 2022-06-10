@@ -51,11 +51,9 @@ class UseNotesController:
    def getStore(self, userId):
       try:
 
-         requestData = json.loads(request.data)
+         categoryId = request.args.get('categoryId')
 
          note = Note()
-
-         categoryId = requestData['categoryId']
 
          allNotes = note.findAll(categoryId, userId)
 
