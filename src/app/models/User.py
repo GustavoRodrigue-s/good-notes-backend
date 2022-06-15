@@ -2,6 +2,8 @@ from database.Database import Database
 
 import os
 
+from random import randint
+
 from cryptocode import encrypt, decrypt
 
 from dotenv import load_dotenv
@@ -112,6 +114,22 @@ class User:
 
       return errors
 
+   def validateActivationCode(self, code):
+
+      userExists = self.findOne('id = %s', self.id)
+
+      if not code:
+         raise Exception('activation code empty')
+
+      if len(code) != 5:
+         raise Exception('code incomplete')
+
+      if not userExists:
+         raise Exception('user not found')
+
+      if code != userExists[7]:
+         raise Exception('invalid code')
+
    def findOne(self, where, *value):
 
       query = f'''SELECT * FROM users WHERE {where}'''
@@ -131,20 +149,24 @@ class User:
 
       self.hashPassword()
 
+      activateCode = randint(10000, 99999)
+
       query = '''
-         INSERT INTO users(id, username, email, password) 
-         VALUES(DEFAULT, %s, %s, %s) RETURNING id
+         INSERT INTO users(id, username, email, password, verification_code, active) 
+         VALUES(DEFAULT, %s, %s, %s, %s, FALSE) RETURNING id
       '''
 
       cursor, connection = Database.connect()
 
       try:
-         cursor.execute(query,  (self.username, self.email, self.password))
+         cursor.execute(query,  (self.username, self.email, self.password, activateCode))
 
          self.id = cursor.fetchone()[0]
 
       finally:
          Database.disconnect(cursor, connection)
+
+      return activateCode
 
    def delete(self):
 
@@ -163,6 +185,18 @@ class User:
 
       try:
          cursor.execute(query, (self.id, self.id, self.id))
+
+      finally:
+         Database.disconnect(cursor, connection)
+
+   def update(self, set, where, *value):
+
+      query = f'''UPDATE users SET {set} WHERE {where}'''
+
+      cursor, connection = Database.connect()
+
+      try:
+         cursor.execute(query, (*value, ))
 
       finally:
          Database.disconnect(cursor, connection)

@@ -25,7 +25,22 @@ class UseAuthController():
          if hasSomeError:
             return jsonify({ "errors": hasSomeError, "state": "error" }, 401)
 
+         accountActivated = userExists[8]
+
          user.id = userExists[0]
+
+         if not accountActivated:
+            activationToken = JwtProvider.createToken(user.id, os.environ.get('ACTIVATION_TOKEN_KEY'), 15)
+
+            return jsonify(
+               { 
+                  'state': 'success',
+                  'reason': 'account not active',
+                  'userData': {
+                     'activationToken': activationToken
+                  } 
+               }, 301
+            )
 
          accessToken, refreshToken = self.createAuthentication(user)
 
@@ -39,7 +54,7 @@ class UseAuthController():
          }, 200)
 
       except Exception as e:
-         return jsonify({ "state": "error", 'reason': f'{e}' }, 401)
+         return jsonify({ "state": "error", "reason": f'{e}' }, 401)
 
    def createAuthentication(self, user):
       try:
@@ -51,7 +66,7 @@ class UseAuthController():
 
          refreshToken = JwtProvider.createToken(
             user.id, os.environ.get('REFRESH_TOKEN_KEY'),
-            43200 if user.keepConnected else 1440
+            1440
          )
 
          return accessToken, refreshToken

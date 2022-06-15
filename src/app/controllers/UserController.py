@@ -1,8 +1,22 @@
 from flask import request, json, jsonify
 
+import smtplib, os, sys
+
 from app.models.User import User
 
 from app.controllers.AuthController import AuthController
+from services.JwtProvider import JwtProvider
+
+sys.path.insert(1, './')
+
+from emailTemplates.activeCode import createEmailActiveCodeTemplate
+
+from email.message import EmailMessage
+from random import randint
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class UseUserController():
    def store(self):
@@ -17,15 +31,19 @@ class UseUserController():
          if hasSomeError:
             return jsonify({ "errors": hasSomeError, "state": "error" }, 401)
 
-         user.create()
+         activateCode = user.create()
 
-         accessToken, refreshToken = AuthController.createAuthentication(user)
-         
+         activationToken = JwtProvider.createToken(user.id, os.environ.get('ACTIVATION_TOKEN_KEY'), 15)
+
+         self.sendActivationCode(user.email, user.username, activateCode)
+
          return jsonify (
             {
                "state": "success",
                "reason": "all right",
-               "userData": { 'accessToken': accessToken, 'refreshToken': refreshToken }
+               "userData": {
+                  'activationToken': activationToken
+               }
             }, 200
          )
 
@@ -133,5 +151,74 @@ class UseUserController():
       except Exception as e:
          return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 
+   # mandar para o models
+   def sendActivationCode(self, userEmail, userNickname, randomCode):
+
+      msg = EmailMessage()
+      msg['Subject'] = "Código de Ativação - Good Notes"
+      msg['From'] = os.environ.get('EMAIL_ADDRESS')
+      msg['To'] = userEmail
+
+      msg.add_alternative(createEmailActiveCodeTemplate(userNickname, randomCode), subtype='html')
+
+      smtp = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+      smtp.login(os.environ.get('EMAIL_ADDRESS'), os.environ.get('EMAIL_PASSWORD'))
+      smtp.send_message(msg)
+
+   def resendingActivationCode(self):
+      try:
+
+         if not 'Authorization' in request.headers:
+            raise Exception('no activation token')
+
+         activationToken = JwtProvider.createToken(user.id, os.environ.get('ACTIVATION_TOKEN_KEY'), 15)
+
+         self.sendActivationCode(user.email, user.username, activateCode)
+
+         return jsonify(
+            { 
+            'state': 'success',
+            'userData': { 
+               'activationToken': activationToken 
+               } 
+            }, 200
+         )
+
+      except Exception as e:
+         return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
+
+   def checkActivationCode(self):
+      try:
+
+         if not 'Authorization' in request.headers:
+            raise Exception('no activation token')
+
+         activationToken = request.headers['Authorization']
+         activationCode = json.loads(request.data)['activationCode']
+
+         id = JwtProvider.readToken(activationToken, os.environ.get('ACTIVATION_TOKEN_KEY'))['id']
+
+         user = User({})
+         user.id = id
+
+         user.validateActivationCode(activationCode)
+
+         user.update('active = %s', 'id = %s', 'TRUE', id)
+
+         accessToken, refreshToken = AuthController.createAuthentication(user)
+
+         return jsonify(
+            { 
+               'state': 'success',
+               "userData": { 
+                  'accessToken': accessToken,
+                  'refreshToken': refreshToken
+               }
+            }, 200
+         )
+
+      except Exception as e:
+         return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
+      
 
 UserController = UseUserController()

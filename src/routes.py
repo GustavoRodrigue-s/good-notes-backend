@@ -1,5 +1,3 @@
-from flask import jsonify
-
 import sys
 
 sys.path.insert(1, './src')
@@ -20,6 +18,10 @@ def createRoutes(app):
    def routeRegister():
       return UserController.store()
 
+   @app.route('/checkActivationCode', methods=['POST'])
+   def routeCheckActivationCode():
+      return UserController.checkActivationCode()
+
    @app.route('/logout', methods=['GET'])
    @authMiddleware
    def routeLogoutUser(userId):
@@ -29,6 +31,11 @@ def createRoutes(app):
    @authMiddleware
    def routeTokenRequired(userId):
       return UserController.getStore(userId)
+
+   @app.route('/auth', methods=['GET'])
+   @authMiddleware
+   def routeConfirmActivationCode(userId):
+      return UserController.checkActivationCode(userId)
 
    @app.route('/getProfile', methods=['GET'])
    @authMiddleware
