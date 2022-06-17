@@ -1,18 +1,11 @@
 from flask import request, json, jsonify
 
-import smtplib, os, sys
+import os
 
 from app.models.User import User
 
 from app.controllers.AuthController import AuthController
 from services.JwtProvider import JwtProvider
-
-sys.path.insert(1, './')
-
-from emailTemplates.activeCode import createEmailActiveCodeTemplate
-
-from email.message import EmailMessage
-from random import randint
 
 from dotenv import load_dotenv
 
@@ -35,14 +28,15 @@ class UseUserController():
 
          activationToken = JwtProvider.createToken(user.id, os.environ.get('ACTIVATION_TOKEN_KEY'), 15)
 
-         self.sendActivationCode(user.email, user.username, activateCode)
+         user.sendEmailCode(activateCode)
 
          return jsonify (
             {
                "state": "success",
                "reason": "all right",
                "userData": {
-                  'activationToken': activationToken
+                  'activationToken': activationToken,
+                  'sessionEmail': user.email 
                }
             }, 200
          )
@@ -151,35 +145,34 @@ class UseUserController():
       except Exception as e:
          return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 
-   # mandar para o models
-   def sendActivationCode(self, userEmail, userNickname, randomCode):
-
-      msg = EmailMessage()
-      msg['Subject'] = "Código de Ativação - Good Notes"
-      msg['From'] = os.environ.get('EMAIL_ADDRESS')
-      msg['To'] = userEmail
-
-      msg.add_alternative(createEmailActiveCodeTemplate(userNickname, randomCode), subtype='html')
-
-      smtp = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-      smtp.login(os.environ.get('EMAIL_ADDRESS'), os.environ.get('EMAIL_PASSWORD'))
-      smtp.send_message(msg)
-
    def resendingActivationCode(self):
       try:
 
-         if not 'Authorization' in request.headers:
-            raise Exception('no activation token')
+         sessionEmail = request.args.get('sessionEmail')
+
+         if not sessionEmail:
+            raise Exception('no session email')
+
+         user = User({ 'email': sessionEmail })
+         
+         userExists = user.findOne('email = %s', user.email)
+
+         if not userExists:
+            raise Exception('user not found')
+
+         user.id = userExists[0]
+         user.username = userExists[1]
+         user.email = userExists[2]
 
          activationToken = JwtProvider.createToken(user.id, os.environ.get('ACTIVATION_TOKEN_KEY'), 15)
 
-         self.sendActivationCode(user.email, user.username, activateCode)
+         user.sendEmailCode()
 
          return jsonify(
             { 
-            'state': 'success',
-            'userData': { 
-               'activationToken': activationToken 
+               'state': 'success',
+               'userData': { 
+                  'activationToken': activationToken 
                } 
             }, 200
          )
@@ -187,30 +180,26 @@ class UseUserController():
       except Exception as e:
          return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 
-   def checkActivationCode(self):
+   def checkActivationCode(self, userId):
       try:
+         requestData = json.loads(request.data)
 
-         if not 'Authorization' in request.headers:
-            raise Exception('no activation token')
+         activationCode = requestData['activationCode']
+         sessionConnected = requestData['keepConnected']
 
-         activationToken = request.headers['Authorization']
-         activationCode = json.loads(request.data)['activationCode']
-
-         id = JwtProvider.readToken(activationToken, os.environ.get('ACTIVATION_TOKEN_KEY'))['id']
-
-         user = User({})
-         user.id = id
+         user = User({ 'keepConnected': sessionConnected })
+         user.id = userId
 
          user.validateActivationCode(activationCode)
 
-         user.update('active = %s', 'id = %s', 'TRUE', id)
+         user.update('active = %s', 'id = %s', 'TRUE', user.id)
 
          accessToken, refreshToken = AuthController.createAuthentication(user)
 
          return jsonify(
-            { 
+            {
                'state': 'success',
-               "userData": { 
+               'userData': { 
                   'accessToken': accessToken,
                   'refreshToken': refreshToken
                }

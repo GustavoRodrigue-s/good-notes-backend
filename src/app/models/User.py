@@ -1,10 +1,17 @@
 from database.Database import Database
 
-import os
+import os, sys
 
 from random import randint
 
 from cryptocode import encrypt, decrypt
+
+from smtplib import SMTP_SSL
+
+sys.path.insert(1, './')
+
+from emailTemplates.activeCode import createEmailActiveCodeTemplate
+from email.message import EmailMessage
 
 from dotenv import load_dotenv
 
@@ -118,14 +125,11 @@ class User:
 
       userExists = self.findOne('id = %s', self.id)
 
-      if not code:
-         raise Exception('activation code empty')
-
-      if len(code) != 5:
-         raise Exception('code incomplete')
-
       if not userExists:
          raise Exception('user not found')
+
+      if len(code) < 5:
+         raise Exception('code incomplete')
 
       if code != userExists[7]:
          raise Exception('invalid code')
@@ -242,6 +246,34 @@ class User:
 
       finally:
          Database.disconnect(cursor, connection)
+
+   def sendEmailCode(self, randomCode = None):
+
+      if not randomCode:
+         activateCode = randint(10000, 99999)  
+
+         self.update('verification_code = %s', 'id = %s', activateCode, self.id)
+
+         randomCode = activateCode
+
+      msg = EmailMessage()
+
+      msg['Subject'] = "Código de Ativação - Good Notes"
+      msg['From'] = "Good Notes"
+      msg['To'] = self.email
+
+      msg.add_alternative(
+         createEmailActiveCodeTemplate(self.username, randomCode),
+         subtype='html'
+      )
+
+      emailConnection = SMTP_SSL('smtp.gmail.com', 465)
+      emailConnection.login(os.environ.get('EMAIL_ADDRESS'), os.environ.get('EMAIL_PASSWORD'))
+      
+      try:
+         emailConnection.send_message(msg)
+      finally:
+         emailConnection.quit()
 
    def hashPassword(self):
       hashPassword = encrypt(self.password, os.environ.get('HASH_PASSWORD_KEY'))

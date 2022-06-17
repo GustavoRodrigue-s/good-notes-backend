@@ -28,19 +28,22 @@ class UseAuthController():
          accountActivated = userExists[8]
 
          user.id = userExists[0]
+         user.username = userExists[1]
+         user.email = userExists[2]
 
          if not accountActivated:
             activationToken = JwtProvider.createToken(user.id, os.environ.get('ACTIVATION_TOKEN_KEY'), 15)
 
-            return jsonify(
-               { 
-                  'state': 'success',
-                  'reason': 'account not active',
-                  'userData': {
-                     'activationToken': activationToken
-                  } 
-               }, 301
-            )
+            user.sendEmailCode()
+         
+            return jsonify({
+               'state': 'error',
+               'reason': 'account not activated',
+               'userData': {
+                  'activationToken': activationToken,
+                  'sessionEmail': user.email
+               } 
+            }, 301)
 
          accessToken, refreshToken = self.createAuthentication(user)
 
@@ -58,16 +61,13 @@ class UseAuthController():
 
    def createAuthentication(self, user):
       try:
-
          if user.id in sessionIdBlackList:
             sessionIdBlackList.remove(user.id)
 
-         accessToken = JwtProvider.createToken(user.id, os.environ.get('ACCESS_TOKEN_KEY'), 10)
+         refreshTokenTime = 43200 if user.keepConnected else 1440
 
-         refreshToken = JwtProvider.createToken(
-            user.id, os.environ.get('REFRESH_TOKEN_KEY'),
-            1440
-         )
+         accessToken = JwtProvider.createToken(user.id, os.environ.get('ACCESS_TOKEN_KEY'), 10)
+         refreshToken = JwtProvider.createToken(user.id, os.environ.get('REFRESH_TOKEN_KEY'), refreshTokenTime)
 
          return accessToken, refreshToken
 

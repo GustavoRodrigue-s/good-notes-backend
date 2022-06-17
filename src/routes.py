@@ -8,6 +8,7 @@ from app.controllers.CategoryController import CategoryController
 from app.controllers.NotesController import NotesController
 
 from app.middlewares.authMiddleware import authMiddleware
+from app.middlewares.activationAccountMiddleware import activationAccountMiddleware 
 
 def createRoutes(app):
    @app.route('/login', methods=['POST'])
@@ -18,9 +19,14 @@ def createRoutes(app):
    def routeRegister():
       return UserController.store()
 
-   @app.route('/checkActivationCode', methods=['POST'])
-   def routeCheckActivationCode():
-      return UserController.checkActivationCode()
+   @app.route('/checkEmailCode', methods=['POST'])
+   @activationAccountMiddleware
+   def routeCheckActivationCode(userId):
+      return UserController.checkActivationCode(userId)
+
+   @app.route('/resendEmailCode', methods=['GET'])
+   def routeResendEmailCode():
+      return UserController.resendingActivationCode()
 
    @app.route('/logout', methods=['GET'])
    @authMiddleware
