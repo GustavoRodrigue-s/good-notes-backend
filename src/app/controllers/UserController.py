@@ -147,10 +147,12 @@ class UseUserController():
 
    def resendingActivationCode(self):
       try:
-
+         
          sessionEmail = request.args.get('sessionEmail')
 
-         if not sessionEmail:
+         print(sessionEmail)
+
+         if not sessionEmail or sessionEmail == 'null':
             raise Exception('no session email')
 
          user = User({ 'email': sessionEmail })
