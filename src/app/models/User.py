@@ -10,7 +10,7 @@ from smtplib import SMTP_SSL
 
 sys.path.insert(1, './')
 
-from emailTemplates.activeCode import createEmailActiveCodeTemplate
+from emailTemplates.emailConfirmationCode import createEmailConfirmationCodeTemplate
 from email.message import EmailMessage
 
 from dotenv import load_dotenv
@@ -121,7 +121,7 @@ class User:
 
       return errors
 
-   def validateActivationCode(self, code):
+   def validateEmailConfirmationCode(self, code):
 
       userExists = self.findOne('id = %s', self.id)
 
@@ -211,41 +211,9 @@ class User:
 
       url, id = PhotoUploader.update(photoUrl, existingPhotoId) if existingPhotoId else PhotoUploader.create(photoUrl)
 
-      query = '''UPDATE users SET photo_url = %s, photo_id = %s WHERE id = %s'''
-
-      cursor, connection = Database.connect()
-
-      try:
-         cursor.execute(query, (url, id, self.id))
-
-      finally:
-         Database.disconnect(cursor, connection)
+      self.update('photo_url = %s, photo_id = %s', 'id = %s', url, id, self.id)
 
       return url
-
-   def updateUsernameAndEmail(self):
-
-      query = 'UPDATE users SET email = %s, username = %s WHERE id = %s'
-
-      cursor, connection = Database.connect()
-
-      try:
-         cursor.execute(query, (self.email, self.username, self.id))
-
-      finally:
-         Database.disconnect(cursor, connection)
-
-   def updatePassword(self):
-
-      query = 'UPDATE users SET password = %s WHERE id = %s'
-
-      cursor, connection = Database.connect()
-
-      try:
-         cursor.execute(query, (self.password, self.id))
-
-      finally:
-         Database.disconnect(cursor, connection)
 
    def sendEmailCode(self, randomCode = None):
 
@@ -263,7 +231,7 @@ class User:
       msg['To'] = self.email
 
       msg.add_alternative(
-         createEmailActiveCodeTemplate(self.username, randomCode),
+         createEmailConfirmationCodeTemplate(self.username, randomCode),
          subtype='html'
       )
 

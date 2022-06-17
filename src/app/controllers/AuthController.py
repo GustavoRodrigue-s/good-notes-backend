@@ -32,7 +32,7 @@ class UseAuthController():
          user.email = userExists[2]
 
          if not accountActivated:
-            activationToken = JwtProvider.createToken(user.id, os.environ.get('ACTIVATION_TOKEN_KEY'), 15)
+            emailConfirmationToken = JwtProvider.createToken(user.id, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15)
 
             user.sendEmailCode()
          
@@ -40,7 +40,7 @@ class UseAuthController():
                'state': 'error',
                'reason': 'account not activated',
                'userData': {
-                  'activationToken': activationToken,
+                  'emailConfirmationToken': emailConfirmationToken,
                   'sessionEmail': user.email
                } 
             }, 301)

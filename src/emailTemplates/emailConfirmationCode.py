@@ -1,4 +1,4 @@
-def createEmailActiveCodeTemplate(name, code):
+def createEmailConfirmationCodeTemplate(name, code):
    return f"""
    <table align="center" style="width: 100%; max-width: 500px; padding: 30px 20px; border: 1px solid #c5c5c5; border-radius: 10px;">
       <tbody style="text-align: center; color: #646369; font-size: 20px;">
