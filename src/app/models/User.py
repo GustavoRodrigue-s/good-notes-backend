@@ -1,8 +1,17 @@
 from database.Database import Database
 
-import os
+import os, sys
+
+from random import randint
 
 from cryptocode import encrypt, decrypt
+
+from smtplib import SMTP_SSL
+
+sys.path.insert(1, './')
+
+from emailTemplates.emailConfirmationCode import createEmailConfirmationCodeTemplate
+from email.message import EmailMessage
 
 from dotenv import load_dotenv
 
@@ -112,6 +121,19 @@ class User:
 
       return errors
 
+   def validateEmailConfirmationCode(self, code):
+
+      userExists = self.findOne('id = %s', self.id)
+
+      if not userExists:
+         raise Exception('user not found')
+
+      if len(code) < 5:
+         raise Exception('code incomplete')
+
+      if code != userExists[7]:
+         raise Exception('invalid code')
+
    def findOne(self, where, *value):
 
       query = f'''SELECT * FROM users WHERE {where}'''
@@ -131,20 +153,24 @@ class User:
 
       self.hashPassword()
 
+      activateCode = randint(10000, 99999)
+
       query = '''
-         INSERT INTO users(id, username, email, password) 
-         VALUES(DEFAULT, %s, %s, %s) RETURNING id
+         INSERT INTO users(id, username, email, password, verification_code, active) 
+         VALUES(DEFAULT, %s, %s, %s, %s, FALSE) RETURNING id
       '''
 
       cursor, connection = Database.connect()
 
       try:
-         cursor.execute(query,  (self.username, self.email, self.password))
+         cursor.execute(query,  (self.username, self.email, self.password, activateCode))
 
          self.id = cursor.fetchone()[0]
 
       finally:
          Database.disconnect(cursor, connection)
+
+      return activateCode
 
    def delete(self):
 
@@ -167,47 +193,55 @@ class User:
       finally:
          Database.disconnect(cursor, connection)
 
+   def update(self, set, where, *value):
+
+      query = f'''UPDATE users SET {set} WHERE {where}'''
+
+      cursor, connection = Database.connect()
+
+      try:
+         cursor.execute(query, (*value, ))
+
+      finally:
+         Database.disconnect(cursor, connection)
+
    def uploadPhoto(self, photoUrl):
       
       existingPhotoId = self.findOne('id = %s', self.id)[5]
 
       url, id = PhotoUploader.update(photoUrl, existingPhotoId) if existingPhotoId else PhotoUploader.create(photoUrl)
 
-      query = '''UPDATE users SET photo_url = %s, photo_id = %s WHERE id = %s'''
-
-      cursor, connection = Database.connect()
-
-      try:
-         cursor.execute(query, (url, id, self.id))
-
-      finally:
-         Database.disconnect(cursor, connection)
+      self.update('photo_url = %s, photo_id = %s', 'id = %s', url, id, self.id)
 
       return url
 
-   def updateUsernameAndEmail(self):
+   def sendEmailCode(self, randomCode = None):
 
-      query = 'UPDATE users SET email = %s, username = %s WHERE id = %s'
+      if not randomCode:
+         activateCode = randint(10000, 99999)  
 
-      cursor, connection = Database.connect()
+         self.update('verification_code = %s', 'id = %s', activateCode, self.id)
 
+         randomCode = activateCode
+
+      msg = EmailMessage()
+
+      msg['Subject'] = "Código de Ativação - Good Notes"
+      msg['From'] = "Good Notes"
+      msg['To'] = self.email
+
+      msg.add_alternative(
+         createEmailConfirmationCodeTemplate(self.username, randomCode),
+         subtype='html'
+      )
+
+      emailConnection = SMTP_SSL('smtp.gmail.com', 465)
+      emailConnection.login(os.environ.get('EMAIL_ADDRESS'), os.environ.get('EMAIL_PASSWORD'))
+      
       try:
-         cursor.execute(query, (self.email, self.username, self.id))
-
+         emailConnection.send_message(msg)
       finally:
-         Database.disconnect(cursor, connection)
-
-   def updatePassword(self):
-
-      query = 'UPDATE users SET password = %s WHERE id = %s'
-
-      cursor, connection = Database.connect()
-
-      try:
-         cursor.execute(query, (self.password, self.id))
-
-      finally:
-         Database.disconnect(cursor, connection)
+         emailConnection.quit()
 
    def hashPassword(self):
       hashPassword = encrypt(self.password, os.environ.get('HASH_PASSWORD_KEY'))

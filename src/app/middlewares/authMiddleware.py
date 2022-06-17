@@ -27,7 +27,6 @@ def authMiddleware(f):
             return jsonify({ 'state': "unauthorized", 'reason': 'the session is not valid' }, 401)
 
       except jwt.ExpiredSignatureError:
-         
          try:
             refreshToken = request.headers['Authorization'].split(';')[1]
 

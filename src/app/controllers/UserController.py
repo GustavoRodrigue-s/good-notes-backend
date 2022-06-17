@@ -1,13 +1,19 @@
 from flask import request, json, jsonify
 
+import os
+
 from app.models.User import User
 
 from app.controllers.AuthController import AuthController
+from services.JwtProvider import JwtProvider
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class UseUserController():
    def store(self):
       try:
-
          data = json.loads(request.data)
       
          user = User(data)
@@ -17,15 +23,20 @@ class UseUserController():
          if hasSomeError:
             return jsonify({ "errors": hasSomeError, "state": "error" }, 401)
 
-         user.create()
+         activateCode = user.create()
 
-         accessToken, refreshToken = AuthController.createAuthentication(user)
-         
+         emailConfirmationToken = JwtProvider.createToken(user.id, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15)
+
+         user.sendEmailCode(activateCode)
+
          return jsonify (
             {
                "state": "success",
                "reason": "all right",
-               "userData": { 'accessToken': accessToken, 'refreshToken': refreshToken }
+               "userData": {
+                  'emailConfirmationToken': emailConfirmationToken,
+                  'sessionEmail': user.email 
+               }
             }, 200
          )
 
@@ -34,7 +45,6 @@ class UseUserController():
 
    def destore(self, userId):
       try:
-
          user = User({})
          user.id = userId
          
@@ -66,7 +76,6 @@ class UseUserController():
 
    def updateStore(self, userId):
       try:
-
          requestData = json.loads(request.data)
 
          user = User(requestData)
@@ -80,7 +89,7 @@ class UseUserController():
          if hasSomeError:
             return jsonify({ 'state': 'error', 'errors': hasSomeError }, 403)
 
-         user.updateUsernameAndEmail()
+         user.update('email = %s, username = %s', 'id = %s', user.email, user.username, user.id)
 
          return jsonify({
             'state': 'success',
@@ -95,7 +104,6 @@ class UseUserController():
 
    def updatePassword(self, userId):
       try:
-
          requestData = json.loads(request.data)
 
          user = User({ 'password': requestData['oldPassword'] })
@@ -109,7 +117,7 @@ class UseUserController():
          user.password = requestData['newPassword']
          user.hashPassword()
 
-         user.updatePassword()
+         user.update('password = %s', 'id = %s', user.password, user.id)
 
          return jsonify({ 'state': 'success' }, 200)
 
@@ -118,7 +126,6 @@ class UseUserController():
 
    def uploadPhoto(self, userId):
       try:
-
          photoDatas = json.loads(request.data)
 
          user = User({})
@@ -133,5 +140,68 @@ class UseUserController():
       except Exception as e:
          return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 
+   def resendEmailConfirmation(self):
+      try:
+         sessionEmail = request.args.get('sessionEmail')
+
+         if not sessionEmail or sessionEmail == 'null':
+            raise Exception('no session email')
+
+         user = User({ 'email': sessionEmail })
+         
+         userExists = user.findOne('email = %s', user.email)
+
+         if not userExists:
+            raise Exception('user not found')
+
+         user.id = userExists[0]
+         user.username = userExists[1]
+         user.email = userExists[2]
+
+         emailConfirmationToken = JwtProvider.createToken(user.id, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15)
+
+         user.sendEmailCode()
+
+         return jsonify(
+            { 
+               'state': 'success',
+               'userData': { 
+                  'emailConfirmationToken': emailConfirmationToken 
+               } 
+            }, 200
+         )
+
+      except Exception as e:
+         return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
+
+   def checkEmailConfirmationCode(self, userId):
+      try:
+         requestData = json.loads(request.data)
+
+         activationCode = requestData['activationCode']
+         sessionConnected = requestData['keepConnected']
+
+         user = User({ 'keepConnected': sessionConnected })
+         user.id = userId
+
+         user.validateEmailConfirmationCode(activationCode)
+
+         user.update('active = %s', 'id = %s', 'TRUE', user.id)
+
+         accessToken, refreshToken = AuthController.createAuthentication(user)
+
+         return jsonify(
+            {
+               'state': 'success',
+               'userData': { 
+                  'accessToken': accessToken,
+                  'refreshToken': refreshToken
+               }
+            }, 200
+         )
+
+      except Exception as e:
+         return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
+      
 
 UserController = UseUserController()

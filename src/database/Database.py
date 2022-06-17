@@ -21,6 +21,8 @@ class UseDatabase:
             photo_url         VARCHAR,
             photo_id          VARCHAR,
             datetime          TIMESTAMPTZ DEFAULT NOW(),
+            verification_code VARCHAR(5) NOT NULL,
+            active            BOOLEAN NOT NULL,
             PRIMARY KEY (id)
          );
   

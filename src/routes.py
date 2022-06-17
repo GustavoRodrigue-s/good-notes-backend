@@ -1,5 +1,3 @@
-from flask import jsonify
-
 import sys
 
 sys.path.insert(1, './src')
@@ -10,6 +8,7 @@ from app.controllers.CategoryController import CategoryController
 from app.controllers.NotesController import NotesController
 
 from app.middlewares.authMiddleware import authMiddleware
+from app.middlewares.emailConfirmationMiddleware import emailConfirmationMiddleware 
 
 def createRoutes(app):
    @app.route('/login', methods=['POST'])
@@ -20,6 +19,15 @@ def createRoutes(app):
    def routeRegister():
       return UserController.store()
 
+   @app.route('/checkEmailConfirmationCode', methods=['POST'])
+   @emailConfirmationMiddleware
+   def routeCheckEmailConfirmationCode(userId):
+      return UserController.checkEmailConfirmationCode(userId)
+
+   @app.route('/resendEmailConfirmation', methods=['GET'])
+   def routeResendEmailCode():
+      return UserController.resendEmailConfirmation()
+
    @app.route('/logout', methods=['GET'])
    @authMiddleware
    def routeLogoutUser(userId):
@@ -29,6 +37,11 @@ def createRoutes(app):
    @authMiddleware
    def routeTokenRequired(userId):
       return UserController.getStore(userId)
+
+   @app.route('/auth', methods=['GET'])
+   @authMiddleware
+   def routeConfirmActivationCode(userId):
+      return UserController.checkActivationCode(userId)
 
    @app.route('/getProfile', methods=['GET'])
    @authMiddleware

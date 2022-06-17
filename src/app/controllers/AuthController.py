@@ -25,7 +25,25 @@ class UseAuthController():
          if hasSomeError:
             return jsonify({ "errors": hasSomeError, "state": "error" }, 401)
 
+         accountActivated = userExists[8]
+
          user.id = userExists[0]
+         user.username = userExists[1]
+         user.email = userExists[2]
+
+         if not accountActivated:
+            emailConfirmationToken = JwtProvider.createToken(user.id, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15)
+
+            user.sendEmailCode()
+         
+            return jsonify({
+               'state': 'error',
+               'reason': 'account not activated',
+               'userData': {
+                  'emailConfirmationToken': emailConfirmationToken,
+                  'sessionEmail': user.email
+               } 
+            }, 301)
 
          accessToken, refreshToken = self.createAuthentication(user)
 
@@ -39,20 +57,17 @@ class UseAuthController():
          }, 200)
 
       except Exception as e:
-         return jsonify({ "state": "error", 'reason': f'{e}' }, 401)
+         return jsonify({ "state": "error", "reason": f'{e}' }, 401)
 
    def createAuthentication(self, user):
       try:
-
          if user.id in sessionIdBlackList:
             sessionIdBlackList.remove(user.id)
 
-         accessToken = JwtProvider.createToken(user.id, os.environ.get('ACCESS_TOKEN_KEY'), 10)
+         refreshTokenTime = 43200 if user.keepConnected else 1440
 
-         refreshToken = JwtProvider.createToken(
-            user.id, os.environ.get('REFRESH_TOKEN_KEY'),
-            43200 if user.keepConnected else 1440
-         )
+         accessToken = JwtProvider.createToken(user.id, os.environ.get('ACCESS_TOKEN_KEY'), 10)
+         refreshToken = JwtProvider.createToken(user.id, os.environ.get('REFRESH_TOKEN_KEY'), refreshTokenTime)
 
          return accessToken, refreshToken
 
