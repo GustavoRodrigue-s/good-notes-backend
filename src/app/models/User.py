@@ -3,6 +3,7 @@ from database.Database import Database
 import os, sys
 
 from random import randint
+from services.JwtProvider import JwtProvider
 
 from cryptocode import encrypt, decrypt
 
@@ -121,9 +122,9 @@ class User:
 
       return errors
 
-   def validateEmailConfirmationCode(self, code):
+   def validateEmailConfirmationCode(self, code, user = None):
 
-      userExists = self.findOne('id = %s', self.id)
+      userExists = user or self.findOne('id = %s', self.id)
 
       if not userExists:
          raise Exception('user not found')
@@ -224,9 +225,11 @@ class User:
 
          randomCode = activateCode
 
+      token = JwtProvider.createToken(self.id, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15)
+
       msg = EmailMessage()
 
-      msg['Subject'] = "Código de Ativação - Good Notes"
+      msg['Subject'] = "Código de Confirmação - Good Notes"
       msg['From'] = "Good Notes"
       msg['To'] = self.email
 
@@ -242,6 +245,8 @@ class User:
          emailConnection.send_message(msg)
       finally:
          emailConnection.quit()
+
+      return token
 
    def hashPassword(self):
       hashPassword = encrypt(self.password, os.environ.get('HASH_PASSWORD_KEY'))

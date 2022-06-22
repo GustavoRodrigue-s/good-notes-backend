@@ -19,7 +19,7 @@ def createEmailConfirmationCodeTemplate(name, code):
          </tr>
          <tr>
             <td style="font-size: 17px; padding-top: 10px;">
-               O código para ativar a sua conta é:
+               O código para confirmar o seu e-mail é:
             </td>
          </tr>
          <tr style="height: 90px;">
@@ -36,17 +36,17 @@ def createEmailConfirmationCodeTemplate(name, code):
          </tr>
          <tr>
             <td style="font-size: 16px; padding-top: 10px;">
-               Por que é preciso ativar a conta?
+               Por que é preciso confirmar o e-mail?
             </td>
          </tr>
          <tr>
             <td style="font-size: 13px; text-align: justify ;padding: 10px 5px 15px 5px;">
-               Isso é necessário para diferenciar um usuário de um <em>spam</em>. O nosso serviço oferece algumas funcionalidades que só podem ser utilizadas através do email, por isso nós filtramos apenas os usuários autênticos.
+               Isso é necessário para diferenciar um usuário de um <em>spam</em>. O nosso serviço oferece algumas funcionalidades que só podem ser utilizadas através do e-mail, por isso nós filtramos apenas os usuários autênticos.
             </td>
          </tr>
          <tr>
             <td style="font-size: 15px; padding-top: 15px; border-top: 1px solid #c5c5c5; color: #000">
-               Se você não se cadastrou, por favor ignore este email.
+               Se você não se cadastrou, por favor ignore este e-mail.
             </td>
          </tr>
          <tr>
