@@ -32,9 +32,7 @@ class UseAuthController():
          user.email = userExists[2]
 
          if not accountActivated:
-            emailConfirmationToken = JwtProvider.createToken(user.id, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15)
-
-            user.sendEmailCode()
+            emailConfirmationToken = user.sendEmailCode()
          
             return jsonify({
                'state': 'error',

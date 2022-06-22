@@ -1,11 +1,8 @@
 from flask import request, json, jsonify
 
-import os
-
 from app.models.User import User
 
 from app.controllers.AuthController import AuthController
-from services.JwtProvider import JwtProvider
 
 from dotenv import load_dotenv
 
@@ -25,9 +22,7 @@ class UseUserController():
 
          activateCode = user.create()
 
-         emailConfirmationToken = JwtProvider.createToken(user.id, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15)
-
-         user.sendEmailCode(activateCode)
+         emailConfirmationToken = user.sendEmailCode(activateCode)
 
          return jsonify (
             {
@@ -89,18 +84,38 @@ class UseUserController():
          if hasSomeError:
             return jsonify({ 'state': 'error', 'errors': hasSomeError }, 403)
 
-         user.update('email = %s, username = %s', 'id = %s', user.email, user.username, user.id)
+         user.update('username = %s', 'id = %s', user.username, user.id)
 
-         return jsonify({
-            'state': 'success',
-            'newDatas': {
-               'email': user.email,
-               'username': user.username 
-            }
-         }, 200)
+         userExists = user.findOne('id = %s', user.id)
+
+         resp = { 'state': 'success' }
+         
+         if user.email != userExists[2]:
+            resp['emailConfirmationToken'] = user.sendEmailCode()
+
+         return jsonify(resp, 200)
 
       except Exception as e:
          return jsonify({ "state": "error", 'reason': f'{e}' }, 401)
+
+   def updateEmail(self, userId):
+      try:
+         requestData = json.loads(request.data)
+
+         emailConfirmationCode = requestData['emailConfirmationCode']
+         newEmail = requestData['newEmail']
+         
+         user = User({ 'email': newEmail })
+         user.id = userId
+
+         user.validateEmailConfirmationCode(emailConfirmationCode)
+
+         user.update('email = %s', 'id = %s', user.email, user.id)
+
+         return jsonify({ 'state': 'success' }, 200)
+
+      except Exception as e:
+         return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 
    def updatePassword(self, userId):
       try:
@@ -140,14 +155,13 @@ class UseUserController():
       except Exception as e:
          return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 
-   def resendEmailConfirmation(self):
+   def sendEmailConfirmation(self):
       try:
-         sessionEmail = request.args.get('sessionEmail')
+         requestData = json.loads(request.data)
 
-         if not sessionEmail or sessionEmail == 'null':
-            raise Exception('no session email')
+         email = requestData['email'] 
 
-         user = User({ 'email': sessionEmail })
+         user = User({ 'email': email })
          
          userExists = user.findOne('email = %s', user.email)
 
@@ -156,11 +170,9 @@ class UseUserController():
 
          user.id = userExists[0]
          user.username = userExists[1]
-         user.email = userExists[2]
+         user.email = requestData['emailToUpdate'] if 'emailToUpdate' in requestData else user.email
 
-         emailConfirmationToken = JwtProvider.createToken(user.id, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15)
-
-         user.sendEmailCode()
+         emailConfirmationToken = user.sendEmailCode()
 
          return jsonify(
             { 
@@ -174,17 +186,17 @@ class UseUserController():
       except Exception as e:
          return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 
-   def checkEmailConfirmationCode(self, userId):
+   def activateAccount(self, userId):
       try:
          requestData = json.loads(request.data)
 
-         activationCode = requestData['activationCode']
+         emailConfirmationCode = requestData['emailConfirmationCode']
          sessionConnected = requestData['keepConnected']
 
          user = User({ 'keepConnected': sessionConnected })
          user.id = userId
 
-         user.validateEmailConfirmationCode(activationCode)
+         user.validateEmailConfirmationCode(emailConfirmationCode)
 
          user.update('active = %s', 'id = %s', 'TRUE', user.id)
 
