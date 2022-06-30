@@ -32,7 +32,7 @@ class UseAuthController():
          user.email = userExists[2]
 
          if not accountActivated:
-            emailConfirmationToken = user.sendEmailCode()
+            emailConfirmationToken = user.sendActivationEmailCode()
          
             return jsonify({
                'state': 'error',
@@ -64,8 +64,8 @@ class UseAuthController():
 
          refreshTokenTime = 43200 if user.keepConnected else 1440
 
-         accessToken = JwtProvider.createToken(user.id, os.environ.get('ACCESS_TOKEN_KEY'), 10)
-         refreshToken = JwtProvider.createToken(user.id, os.environ.get('REFRESH_TOKEN_KEY'), refreshTokenTime)
+         accessToken = JwtProvider.createToken({ 'id': user.id }, os.environ.get('ACCESS_TOKEN_KEY'), 10)
+         refreshToken = JwtProvider.createToken({ 'id': user.id }, os.environ.get('REFRESH_TOKEN_KEY'), refreshTokenTime)
 
          return accessToken, refreshToken
 
@@ -80,7 +80,7 @@ class UseAuthController():
          if userId in sessionIdBlackList:
             raise Exception('the session is not valid')
 
-         newAccessToken = JwtProvider.createToken(userId, os.environ.get('ACCESS_TOKEN_KEY'), 10)
+         newAccessToken = JwtProvider.createToken({ 'id': userId }, os.environ.get('ACCESS_TOKEN_KEY'), 10)
 
          return newAccessToken
 

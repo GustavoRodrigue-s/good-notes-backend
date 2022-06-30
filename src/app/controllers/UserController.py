@@ -22,7 +22,7 @@ class UseUserController():
 
          activateCode = user.create()
 
-         emailConfirmationToken = user.sendEmailCode(activateCode)
+         emailConfirmationToken = user.sendActivationEmailCode(activateCode)
 
          return jsonify (
             {
@@ -73,66 +73,97 @@ class UseUserController():
       try:
          requestData = json.loads(request.data)
 
+         print(requestData)
+
          user = User(requestData)
          user.id = userId
 
-         userEmailExists = user.findOne('email = %s AND id <> %s', user.email, user.id)
-         userUsernameExists = user.findOne('username = %s AND id <> %s', user.username, user.id)
+         hasSomeError = []
+         approvedActions = []
 
-         hasSomeError = user.validateUsernameAndEmail(userEmailExists, userUsernameExists)
+         class CreateFieldInterface:
+            def __init__(self, validate, update):
+               self.state = False
+               self.validate = validate
+               self.update = update
+
+         # transformar esses campos em dispatch field para criar um interface
+
+         class AcceptedFields:
+            def email(self):
+               def validate():
+                  userExists = user.findOne('email = %s AND id <> %s', user.email, user.id)
+                  hasSomeError.extend(user.validateEmail(userExists))
+
+               def update():
+                  userExists = user.findOne('id = %s', user.id)
+
+                  if user.email != userExists[2]:
+                     resp['emailConfirmationToken'] = user.sendEmailCodeToUpdateEmail()
+
+               field = CreateFieldInterface(validate, update)
+
+               return field
+
+            def username(self):
+               def validate():
+                  userExists = user.findOne('username = %s AND id <> %s', user.username, user.id)
+                  hasSomeError.extend(user.validateUsername(userExists))
+
+               def update():
+                  user.update('username = %s', 'id = %s', user.username, user.id)
+
+               field = CreateFieldInterface(validate, update)        
+
+               return field       
+
+            def password(self):
+               hasSomeError.extend(user.validatePassword(requestData['newPassword']))
+
+               def action():
+                  user.password = requestData['newPassword']
+                  user.hashPassword()
+
+                  user.update('password = %s', 'id = %s', user.password, user.id)
+
+               approvedActions.append(action)
+
+            def emailAndUsername(self):
+               self.email()
+               self.username()
+
+         acceptedFields = AcceptedFields()
+         
+         getattr(acceptedFields, requestData['currentField'])()
 
          if hasSomeError:
             return jsonify({ 'state': 'error', 'errors': hasSomeError }, 403)
 
-         user.update('username = %s', 'id = %s', user.username, user.id)
-
-         userExists = user.findOne('id = %s', user.id)
-
          resp = { 'state': 'success' }
-         
-         if user.email != userExists[2]:
-            resp['emailConfirmationToken'] = user.sendEmailCode()
+
+         for action in approvedActions:
+            action()
 
          return jsonify(resp, 200)
 
       except Exception as e:
          return jsonify({ "state": "error", 'reason': f'{e}' }, 401)
 
-   def updateEmail(self, userId):
+   def confirmEmailToUpdate(self, token):
       try:
+         if token['auth'] != 'update email':
+            raise Exception('token not authorized')
+
          requestData = json.loads(request.data)
 
          emailConfirmationCode = requestData['emailConfirmationCode']
-         newEmail = requestData['newEmail']
          
-         user = User({ 'email': newEmail })
-         user.id = userId
+         user = User(token)
+         user.id = token['id']
 
          user.validateEmailConfirmationCode(emailConfirmationCode)
 
          user.update('email = %s', 'id = %s', user.email, user.id)
-
-         return jsonify({ 'state': 'success' }, 200)
-
-      except Exception as e:
-         return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
-
-   def updatePassword(self, userId):
-      try:
-         requestData = json.loads(request.data)
-
-         user = User({ 'password': requestData['oldPassword'] })
-         user.id = userId
-
-         hasSomeError = user.validateUpdatePassword(requestData['newPassword'])
-
-         if hasSomeError:
-            return jsonify({ 'errors': hasSomeError, 'state': 'error' }, 401)
-
-         user.password = requestData['newPassword']
-         user.hashPassword()
-
-         user.update('password = %s', 'id = %s', user.password, user.id)
 
          return jsonify({ 'state': 'success' }, 200)
 
@@ -155,13 +186,12 @@ class UseUserController():
       except Exception as e:
          return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 
+   # dinamizar o payload
    def sendEmailConfirmation(self):
       try:
          requestData = json.loads(request.data)
 
-         email = requestData['email'] 
-
-         user = User({ 'email': email })
+         user = User(requestData)
          
          userExists = user.findOne('email = %s', user.email)
 
@@ -172,13 +202,13 @@ class UseUserController():
          user.username = userExists[1]
          user.email = requestData['emailToUpdate'] if 'emailToUpdate' in requestData else user.email
 
-         emailConfirmationToken = user.sendEmailCode()
+         token = user.sendActivationEmailCode()
 
          return jsonify(
             { 
                'state': 'success',
                'userData': { 
-                  'emailConfirmationToken': emailConfirmationToken 
+                  'emailConfirmationToken': token 
                } 
             }, 200
          )
@@ -186,15 +216,18 @@ class UseUserController():
       except Exception as e:
          return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 
-   def activateAccount(self, userId):
+   def activateAccount(self, token):
       try:
+         if token['auth'] != 'active account':
+            raise Exception('token not authorized')
+
          requestData = json.loads(request.data)
 
          emailConfirmationCode = requestData['emailConfirmationCode']
          sessionConnected = requestData['keepConnected']
 
          user = User({ 'keepConnected': sessionConnected })
-         user.id = userId
+         user.id = token['id']
 
          user.validateEmailConfirmationCode(emailConfirmationCode)
 
@@ -211,6 +244,57 @@ class UseUserController():
                }
             }, 200
          )
+
+      except Exception as e:
+         return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
+
+   def forgotPassword(self):
+      try:
+         credentials = json.loads(request.data)
+
+         user = User(credentials)
+
+         hasSomeError = user.validateForgotPassword()
+
+         if hasSomeError:
+            return jsonify({ "errors": hasSomeError, "state": "error" }, 401)
+
+         userExists = user.findOne('email = %s', user.email)
+
+         if not userExists:
+            raise Exception('user not exists')
+
+         user.id = userExists[0]
+         user.username = userExists[1]
+
+         token = user.sendPasswordResetEmailCode()
+
+         return jsonify({
+            'state': 'success',
+            'userData': {
+               'emailConfirmationToken': token
+            } 
+         }, 200)
+
+      except Exception as e:
+         return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
+
+   def resetPassword(self, token):
+      try:
+         if token['auth'] != 'reset password':
+            raise Exception('token not authorized')
+
+         emailConfirmationCode = json.loads(request.data)['emailConfirmationCode']
+
+         user = User(token)
+         user.id = token['id']
+
+         user.validateEmailConfirmationCode(emailConfirmationCode)
+
+         user.hashPassword()
+         user.update('password = %s', 'id = %s', user.password, user.id)
+
+         return jsonify({ 'state': 'success' }, 200)
 
       except Exception as e:
          return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)

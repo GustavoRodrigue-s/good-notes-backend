@@ -3,11 +3,11 @@ import jwt
 from datetime import datetime, timedelta
 
 class UseJwtProvider:
-   def createToken(self, id, SECRET_KEY, time):
+   def createToken(self, payload, SECRET_KEY, time):
 
-      data = { "id": id, "exp": datetime.utcnow() + timedelta(minutes=time) }
+      payload["exp"] = datetime.utcnow() + timedelta(minutes=time)
    
-      token = jwt.encode(data, SECRET_KEY, algorithm='HS256')
+      token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
 
       return token
 

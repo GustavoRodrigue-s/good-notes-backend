@@ -39,7 +39,8 @@ class User:
       userUsernameExists = self.findOne('username = %s', self.username)
 
       errors = [
-         *self.validateUsernameAndEmail(userEmailExists, userUsernameExists)
+         *self.validateEmail(userEmailExists)
+         *self.validateUsername(userUsernameExists)
       ]
 
       if self.password == '' or self.confirmPassword == '':
@@ -75,21 +76,27 @@ class User:
 
       return errors
 
-   def validateUsernameAndEmail(self, userEmailExists, userUsernameExists):
-      
+   def validateUsername(self, userExists):
+
+      errors = []
+
+      if self.username == '':
+         errors.append({'input': 'inputUsername', 'reason': 'empty input'})
+
+      elif userExists:
+         errors.append({'input': 'inputUsername', 'reason': 'username already exists'})
+
+      return errors
+
+   def validateEmail(self, userExists):
+
       errors = []
 
       if self.email == '':
          errors.append({'input': 'inputEmail', 'reason': 'empty input'})
 
-      elif userEmailExists:
+      elif userExists:
          errors.append({'input': 'inputEmail', 'reason': 'email already exists'})
-
-      if self.username == '':
-         errors.append({'input': 'inputUsername', 'reason': 'empty input'})
-
-      elif userUsernameExists:
-         errors.append({'input': 'inputUsername', 'reason': 'username already exists'})
 
       return errors
 
@@ -101,7 +108,7 @@ class User:
       if photoData['size'] > MAXIMUM_PHOTO_SIZE:
          raise Exception('maximum photo size')
 
-   def validateUpdatePassword(self, newPassword):
+   def validatePassword(self, newPassword):
 
       userExists = self.findOne('id = %s', self.id)
       decodedPassword = self.decryptHashPassword(userExists[3])
@@ -134,6 +141,18 @@ class User:
 
       if code != userExists[7]:
          raise Exception('invalid code')
+
+   def validateForgotPassword(self):
+
+      errors = []
+
+      if self.password == '':
+         errors.append({ 'input': 'inputPassword', 'reason': 'empty input' })
+
+      if self.email == '':
+         errors.append({ 'input': 'inputEmail', 'reason': 'empty input' })
+
+      return errors
 
    def findOne(self, where, *value):
 
@@ -216,7 +235,69 @@ class User:
 
       return url
 
-   def sendEmailCode(self, randomCode = None):
+   def sendPasswordResetEmailCode(self):
+
+      activateCode = randint(10000, 99999)  
+
+      self.update('verification_code = %s', 'id = %s', activateCode, self.id)
+
+      payload = { 'auth': 'reset password', 'id': self.id, 'password': self.password }
+
+      token = JwtProvider.createToken(payload, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15)
+
+      msg = EmailMessage()
+
+      msg['Subject'] = "Código para Redefinir Senha - Good Notes"
+      msg['From'] = "Good Notes"
+      msg['To'] = self.email
+
+      msg.add_alternative(
+         createEmailConfirmationCodeTemplate(self.username, activateCode),
+         subtype='html'
+      )
+
+      emailConnection = SMTP_SSL('smtp.gmail.com', 465)
+      emailConnection.login(os.environ.get('EMAIL_ADDRESS'), os.environ.get('EMAIL_PASSWORD'))
+      
+      try:
+         emailConnection.send_message(msg)
+      finally:
+         emailConnection.quit()
+
+      return token
+
+   def sendEmailCodeToUpdateEmail(self):
+
+      activateCode = randint(10000, 99999)  
+
+      self.update('verification_code = %s', 'id = %s', activateCode, self.id)
+
+      payload = { 'auth': 'update email', 'id': self.id, 'email': self.email }
+
+      token = JwtProvider.createToken(payload, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15)
+
+      msg = EmailMessage()
+
+      msg['Subject'] = "Código para Redefinir Senha - Good Notes"
+      msg['From'] = "Good Notes"
+      msg['To'] = self.email
+
+      msg.add_alternative(
+         createEmailConfirmationCodeTemplate(self.username, activateCode),
+         subtype='html'
+      )
+
+      emailConnection = SMTP_SSL('smtp.gmail.com', 465)
+      emailConnection.login(os.environ.get('EMAIL_ADDRESS'), os.environ.get('EMAIL_PASSWORD'))
+      
+      try:
+         emailConnection.send_message(msg)
+      finally:
+         emailConnection.quit()
+
+      return token
+
+   def sendActivationEmailCode(self, randomCode = None):
 
       if not randomCode:
          activateCode = randint(10000, 99999)  
@@ -225,7 +306,9 @@ class User:
 
          randomCode = activateCode
 
-      token = JwtProvider.createToken(self.id, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15)
+      payload = { 'auth': 'active account', 'id': self.id }
+
+      token = JwtProvider.createToken(payload, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15)
 
       msg = EmailMessage()
 
