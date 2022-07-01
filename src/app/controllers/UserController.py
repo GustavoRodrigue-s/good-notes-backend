@@ -87,10 +87,12 @@ class UseUserController():
                def update():
                   userExists = user.findOne('id = %s', user.id)
 
-                  user.username = userExists[1]
+                  user.username = user.username if hasattr(user, 'username') else userExists[1]
 
                   if user.email != userExists[2]:
-                     resp['emailConfirmationToken'] = user.sendEmailCodeToUpdateEmail()
+                     token = user.sendEmailCodeToUpdateEmail()
+
+                     resp['userData'] =  { 'emailConfirmationToken': token } 
 
                field = { 'errors': [], 'validate': validate, 'update': update }
 
@@ -263,6 +265,8 @@ class UseUserController():
          user.id = userExists[0]
          user.username = userExists[1]
 
+         user.hashPassword()
+
          token = user.sendPasswordResetEmailCode()
 
          return jsonify({
@@ -287,7 +291,6 @@ class UseUserController():
 
          user.validateEmailConfirmationCode(emailConfirmationCode)
 
-         user.hashPassword()
          user.update('password = %s', 'id = %s', user.password, user.id)
 
          return jsonify({ 'state': 'success' }, 200)
