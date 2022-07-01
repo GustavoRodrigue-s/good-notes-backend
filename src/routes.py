@@ -33,9 +33,9 @@ def createRoutes(app):
    def routeForgotPassword():
       return UserController.forgotPassword()
 
-   @app.route('/sendEmailConfirmation', methods=['PUT'])
+   @app.route('/sendEmailToActivateAccount', methods=['PUT'])
    def routeSendEmailCode():
-      return UserController.sendEmailConfirmation()
+      return UserController.sendEmailToActivateAccount()
 
    @app.route('/logout', methods=['GET'])
    @authMiddleware
@@ -52,7 +52,7 @@ def createRoutes(app):
    def routeGetData(userId):
       return UserController.getStore(userId)
 
-   @app.route('/updateCredentials', methods=['PUT'])
+   @app.route('/updateStore', methods=['PUT'])
    @authMiddleware
    def routeUpdateCredentials(userId):
       return UserController.updateStore(userId)
@@ -61,12 +61,7 @@ def createRoutes(app):
    @authMiddleware
    @emailConfirmationMiddleware
    def routeUpdateEmail(userId, userPayload):
-      return UserController.updateEmail(userPayload)
-
-   @app.route('/updatePassword', methods=['PUT'])
-   @authMiddleware
-   def routeUpdatePassword(userId):
-      return UserController.updatePassword(userId)
+      return UserController.confirmEmailToUpdate(userPayload)
 
    @app.route('/uploadPhoto', methods=['POST'])
    @authMiddleware

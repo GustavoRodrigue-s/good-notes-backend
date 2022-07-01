@@ -1,5 +1,7 @@
 from flask import request, json, jsonify
 
+from functools import reduce
+
 from app.models.User import User
 
 from app.controllers.AuthController import AuthController
@@ -73,76 +75,72 @@ class UseUserController():
       try:
          requestData = json.loads(request.data)
 
-         print(requestData)
-
          user = User(requestData)
          user.id = userId
-
-         hasSomeError = []
-         approvedActions = []
-
-         class CreateFieldInterface:
-            def __init__(self, validate, update):
-               self.state = False
-               self.validate = validate
-               self.update = update
-
-         # transformar esses campos em dispatch field para criar um interface
 
          class AcceptedFields:
             def email(self):
                def validate():
                   userExists = user.findOne('email = %s AND id <> %s', user.email, user.id)
-                  hasSomeError.extend(user.validateEmail(userExists))
+                  field['errors'] = user.validateEmail(userExists)
 
                def update():
                   userExists = user.findOne('id = %s', user.id)
 
+                  user.username = userExists[1]
+
                   if user.email != userExists[2]:
                      resp['emailConfirmationToken'] = user.sendEmailCodeToUpdateEmail()
 
-               field = CreateFieldInterface(validate, update)
+               field = { 'errors': [], 'validate': validate, 'update': update }
 
                return field
 
             def username(self):
                def validate():
                   userExists = user.findOne('username = %s AND id <> %s', user.username, user.id)
-                  hasSomeError.extend(user.validateUsername(userExists))
+                  field['errors'] = user.validateUsername(userExists)
 
                def update():
                   user.update('username = %s', 'id = %s', user.username, user.id)
 
-               field = CreateFieldInterface(validate, update)        
+               field = { 'errors': [], 'validate': validate, 'update': update }    
 
                return field       
 
             def password(self):
-               hasSomeError.extend(user.validatePassword(requestData['newPassword']))
+               def validate():
+                  field['errors'] = user.validatePassword(requestData['newPassword'])
 
-               def action():
+               def update():
                   user.password = requestData['newPassword']
                   user.hashPassword()
 
                   user.update('password = %s', 'id = %s', user.password, user.id)
 
-               approvedActions.append(action)
+               field = { 'errors': [], 'validate': validate , 'update': update }
 
-            def emailAndUsername(self):
-               self.email()
-               self.username()
+               return field
 
          acceptedFields = AcceptedFields()
          
-         getattr(acceptedFields, requestData['currentField'])()
+         def getField(fieldName):
+            return getattr(acceptedFields, fieldName)()
+
+         fields = list(map(getField, requestData['changedFields']))
+
+         for field in fields:
+            field['validate']()
+
+         hasSomeError = reduce(lambda acc, field: acc + field['errors'], fields, [])
 
          if hasSomeError:
             return jsonify({ 'state': 'error', 'errors': hasSomeError }, 403)
 
          resp = { 'state': 'success' }
 
-         for action in approvedActions:
-            action()
+         for field in fields:
+            field['update']()
 
          return jsonify(resp, 200)
 
@@ -186,8 +184,7 @@ class UseUserController():
       except Exception as e:
          return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 
-   # dinamizar o payload
-   def sendEmailConfirmation(self):
+   def sendEmailToActivateAccount(self):
       try:
          requestData = json.loads(request.data)
 
@@ -200,7 +197,6 @@ class UseUserController():
 
          user.id = userExists[0]
          user.username = userExists[1]
-         user.email = requestData['emailToUpdate'] if 'emailToUpdate' in requestData else user.email
 
          token = user.sendActivationEmailCode()
 

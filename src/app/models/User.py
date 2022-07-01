@@ -278,7 +278,7 @@ class User:
 
       msg = EmailMessage()
 
-      msg['Subject'] = "Código para Redefinir Senha - Good Notes"
+      msg['Subject'] = "Código para Confirmar seu E-mail - Good Notes"
       msg['From'] = "Good Notes"
       msg['To'] = self.email
 
