@@ -149,6 +149,22 @@ class UseUserController():
       except Exception as e:
          return jsonify({ "state": "error", 'reason': f'{e}' }, 401)
 
+   def uploadPhoto(self, userId):
+      try:
+         photoDatas = json.loads(request.data)
+
+         user = User({})
+         user.id = userId
+
+         user.validatePhotoUpload(photoDatas)
+
+         photoUrl = user.uploadPhoto(photoDatas['photo'])
+
+         return jsonify({ 'state': 'success', 'photoData': photoUrl }, 200)
+
+      except Exception as e:
+         return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
+
    def confirmEmailToUpdate(self, token):
       try:
          if token['auth'] != 'update email':
@@ -166,22 +182,6 @@ class UseUserController():
          user.update('email = %s', 'id = %s', user.email, user.id)
 
          return jsonify({ 'state': 'success' }, 200)
-
-      except Exception as e:
-         return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
-
-   def uploadPhoto(self, userId):
-      try:
-         photoDatas = json.loads(request.data)
-
-         user = User({})
-         user.id = userId
-
-         user.validatePhotoUpload(photoDatas)
-
-         photoUrl = user.uploadPhoto(photoDatas['photo'])
-
-         return jsonify({ 'state': 'success', 'photoData': photoUrl }, 200)
 
       except Exception as e:
          return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
