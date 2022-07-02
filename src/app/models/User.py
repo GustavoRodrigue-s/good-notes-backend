@@ -144,7 +144,7 @@ class User:
       if code != userExists[7]:
          raise Exception('invalid code')
 
-   def validateForgotPassword(self):
+   def validateForgotPassword(self, userExists):
 
       errors = []
 
@@ -153,6 +153,9 @@ class User:
 
       if self.email == '':
          errors.append({ 'input': 'inputEmail', 'reason': 'empty input' })
+
+      elif not userExists:
+         errors.append({ 'input': 'inputEmail', 'reason': 'user not exists' })
 
       return errors
 

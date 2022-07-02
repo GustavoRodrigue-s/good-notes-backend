@@ -252,15 +252,12 @@ class UseUserController():
 
          user = User(credentials)
 
-         hasSomeError = user.validateForgotPassword()
+         userExists = user.findOne('email = %s', user.email)
+
+         hasSomeError = user.validateForgotPassword(userExists)
 
          if hasSomeError:
             return jsonify({ "errors": hasSomeError, "state": "error" }, 401)
-
-         userExists = user.findOne('email = %s', user.email)
-
-         if not userExists:
-            raise Exception('user not exists')
 
          user.id = userExists[0]
          user.username = userExists[1]
