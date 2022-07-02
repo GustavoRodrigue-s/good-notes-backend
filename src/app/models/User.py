@@ -38,10 +38,12 @@ class User:
       userEmailExists = self.findOne('email = %s', self.email)
       userUsernameExists = self.findOne('username = %s', self.username)
 
-      errors = [
-         *self.validateEmail(userEmailExists)
-         *self.validateUsername(userUsernameExists)
-      ]
+      errors = []
+
+      errors.extend(self.validateEmail(userEmailExists))
+      errors.extend(self.validateUsername(userUsernameExists))
+
+      print('after', errors)
 
       if self.password == '' or self.confirmPassword == '':
          errors.append({'input': 'inputsPasswords', "reason": 'empty inputs'})

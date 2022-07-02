@@ -14,7 +14,7 @@ class UseUserController():
    def store(self):
       try:
          data = json.loads(request.data)
-      
+
          user = User(data)
 
          hasSomeError = user.validateSignUp()
@@ -87,7 +87,7 @@ class UseUserController():
                def update():
                   userExists = user.findOne('id = %s', user.id)
 
-                  user.username = user.username if hasattr(user, 'username') else userExists[1]
+                  user.username = user.username if user.username else userExists[1]
 
                   if user.email != userExists[2]:
                      token = user.sendEmailCodeToUpdateEmail()
