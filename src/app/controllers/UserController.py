@@ -32,7 +32,7 @@ class UseUserController():
          
          user.create(code)
 
-         emailConfirmationToken = JwtService.createToken(
+         token = JwtService.createToken(
             { 'auth': 'active account', 'id': user.id },
             os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15
          )
@@ -46,7 +46,7 @@ class UseUserController():
                "state": "success",
                "reason": "all right",
                "userData": {
-                  'emailConfirmationToken': emailConfirmationToken,
+                  'emailConfirmationToken': token,
                   'sessionEmail': user.email 
                }
             }, 200
