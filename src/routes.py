@@ -57,11 +57,11 @@ def createRoutes(app):
    def routeUpdateCredentials(userId):
       return UserController.updateStore(userId)
 
-   @app.route('/updateEmail', methods=['PUT'])
+   @app.route('/confirmEmail', methods=['PUT'])
    @authMiddleware
    @emailConfirmationMiddleware
-   def routeUpdateEmail(userId, userPayload):
-      return UserController.confirmEmailToUpdate(userPayload)
+   def routeConfirmEmail(userId, userPayload):
+      return UserController.confirmEmail(userPayload)
 
    @app.route('/uploadPhoto', methods=['POST'])
    @authMiddleware

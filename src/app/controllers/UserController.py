@@ -191,7 +191,7 @@ class UseUserController():
       except Exception as e:
          return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 
-   def confirmEmailToUpdate(self, token):
+   def confirmEmail(self, token):
       try:
          if token['auth'] != 'update email':
             raise Exception('token not authorized')
