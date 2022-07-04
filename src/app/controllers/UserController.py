@@ -212,7 +212,7 @@ class UseUserController():
       except Exception as e:
          return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 
-   def sendEmailToActivateAccount(self):
+   def sendActivateAccountEmail(self):
       try:
          requestData = json.loads(request.data)
 
