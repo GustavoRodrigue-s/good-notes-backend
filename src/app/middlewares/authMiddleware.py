@@ -17,7 +17,7 @@ def authMiddleware(f):
       if not 'Authorization' in request.headers:
          return jsonify({ "state": "unauthorized", 'reason': 'no autorization token' }, 403)
 
-      accessToken = request.headers['Authorization'].split(';')[0]
+      accessToken, refreshToken = request.headers['Authorization'].split(';')
 
       try:
          data = JwtService.readToken(accessToken, os.environ.get('ACCESS_TOKEN_KEY'))
@@ -28,8 +28,6 @@ def authMiddleware(f):
 
       except jwt.ExpiredSignatureError:
          try:
-            refreshToken = request.headers['Authorization'].split(';')[1]
-
             newAccessToken = AuthController.restoreAuthentication(refreshToken)
 
             return jsonify(
