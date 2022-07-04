@@ -2,7 +2,7 @@ import jwt
 
 from datetime import datetime, timedelta
 
-class UseJwtProvider:
+class UseJwtService:
    def createToken(self, payload, SECRET_KEY, time):
 
       payload["exp"] = datetime.utcnow() + timedelta(minutes=time)
@@ -18,4 +18,4 @@ class UseJwtProvider:
       return payload
    
 
-JwtProvider = UseJwtProvider()   
+JwtService = UseJwtService()   

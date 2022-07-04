@@ -2,21 +2,13 @@ from database.Database import Database
 
 import os, sys
 
-from random import randint
-from services.JwtProvider import JwtProvider
-
 from cryptocode import encrypt, decrypt
-
-from smtplib import SMTP_SSL
 
 sys.path.insert(1, './')
 
-from emailTemplates.emailConfirmationCode import createEmailConfirmationCodeTemplate
-from email.message import EmailMessage
-
 from dotenv import load_dotenv
 
-from services.PhotoUploader import PhotoUploader
+from services.PhotoService import PhotoService
 
 load_dotenv()
 
@@ -42,8 +34,6 @@ class User:
 
       errors.extend(self.validateEmail(userEmailExists))
       errors.extend(self.validateUsername(userUsernameExists))
-
-      print('after', errors)
 
       if self.password == '' or self.confirmPassword == '':
          errors.append({'input': 'inputsPasswords', "reason": 'empty inputs'})
@@ -174,11 +164,9 @@ class User:
 
       return user
 
-   def create(self):
+   def create(self, code):
 
       self.hashPassword()
-
-      activateCode = randint(10000, 99999)
 
       query = '''
          INSERT INTO users(id, username, email, password, verification_code, active) 
@@ -188,21 +176,19 @@ class User:
       cursor, connection = Database.connect()
 
       try:
-         cursor.execute(query,  (self.username, self.email, self.password, activateCode))
+         cursor.execute(query,  (self.username, self.email, self.password, code))
 
          self.id = cursor.fetchone()[0]
 
       finally:
          Database.disconnect(cursor, connection)
 
-      return activateCode
-
    def delete(self):
 
       photoId = self.findOne('id = %s', self.id)[5]
 
       if photoId:
-         PhotoUploader.delete(photoId)
+         PhotoService.delete(photoId)
 
       query = '''
          DELETE FROM notes WHERE user_id = %s;
@@ -234,107 +220,11 @@ class User:
       
       existingPhotoId = self.findOne('id = %s', self.id)[5]
 
-      url, id = PhotoUploader.update(photoUrl, existingPhotoId) if existingPhotoId else PhotoUploader.create(photoUrl)
+      url, id = PhotoService.update(photoUrl, existingPhotoId) if existingPhotoId else PhotoService.create(photoUrl)
 
       self.update('photo_url = %s, photo_id = %s', 'id = %s', url, id, self.id)
 
       return url
-
-   def sendPasswordResetEmailCode(self):
-
-      activateCode = randint(10000, 99999)  
-
-      self.update('verification_code = %s', 'id = %s', activateCode, self.id)
-
-      payload = { 'auth': 'reset password', 'id': self.id, 'password': self.password }
-
-      token = JwtProvider.createToken(payload, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15)
-
-      msg = EmailMessage()
-
-      msg['Subject'] = "Código para Redefinir Senha - Good Notes"
-      msg['From'] = "Good Notes"
-      msg['To'] = self.email
-
-      msg.add_alternative(
-         createEmailConfirmationCodeTemplate(self.username, activateCode),
-         subtype='html'
-      )
-
-      emailConnection = SMTP_SSL('smtp.gmail.com', 465)
-      emailConnection.login(os.environ.get('EMAIL_ADDRESS'), os.environ.get('EMAIL_PASSWORD'))
-      
-      try:
-         emailConnection.send_message(msg)
-      finally:
-         emailConnection.quit()
-
-      return token
-
-   def sendEmailCodeToUpdateEmail(self):
-
-      activateCode = randint(10000, 99999)  
-
-      self.update('verification_code = %s', 'id = %s', activateCode, self.id)
-
-      payload = { 'auth': 'update email', 'id': self.id, 'email': self.email }
-
-      token = JwtProvider.createToken(payload, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15)
-
-      msg = EmailMessage()
-
-      msg['Subject'] = "Código para Confirmar seu E-mail - Good Notes"
-      msg['From'] = "Good Notes"
-      msg['To'] = self.email
-
-      msg.add_alternative(
-         createEmailConfirmationCodeTemplate(self.username, activateCode),
-         subtype='html'
-      )
-
-      emailConnection = SMTP_SSL('smtp.gmail.com', 465)
-      emailConnection.login(os.environ.get('EMAIL_ADDRESS'), os.environ.get('EMAIL_PASSWORD'))
-      
-      try:
-         emailConnection.send_message(msg)
-      finally:
-         emailConnection.quit()
-
-      return token
-
-   def sendActivationEmailCode(self, randomCode = None):
-
-      if not randomCode:
-         activateCode = randint(10000, 99999)  
-
-         self.update('verification_code = %s', 'id = %s', activateCode, self.id)
-
-         randomCode = activateCode
-
-      payload = { 'auth': 'active account', 'id': self.id }
-
-      token = JwtProvider.createToken(payload, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15)
-
-      msg = EmailMessage()
-
-      msg['Subject'] = "Código de Confirmação - Good Notes"
-      msg['From'] = "Good Notes"
-      msg['To'] = self.email
-
-      msg.add_alternative(
-         createEmailConfirmationCodeTemplate(self.username, randomCode),
-         subtype='html'
-      )
-
-      emailConnection = SMTP_SSL('smtp.gmail.com', 465)
-      emailConnection.login(os.environ.get('EMAIL_ADDRESS'), os.environ.get('EMAIL_PASSWORD'))
-      
-      try:
-         emailConnection.send_message(msg)
-      finally:
-         emailConnection.quit()
-
-      return token
 
    def hashPassword(self):
       hashPassword = encrypt(self.password, os.environ.get('HASH_PASSWORD_KEY'))

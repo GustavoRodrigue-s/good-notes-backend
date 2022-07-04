@@ -1,3 +1,8 @@
+from dotenv import load_dotenv
+import os
+
+from random import randint
+
 from flask import request, json, jsonify
 
 from functools import reduce
@@ -6,7 +11,8 @@ from app.models.User import User
 
 from app.controllers.AuthController import AuthController
 
-from dotenv import load_dotenv
+from services.JwtService import JwtService
+from services.EmailService import EmailService
 
 load_dotenv()
 
@@ -22,9 +28,18 @@ class UseUserController():
          if hasSomeError:
             return jsonify({ "errors": hasSomeError, "state": "error" }, 401)
 
-         activateCode = user.create()
+         code = randint(10000, 99999) 
+         
+         user.create(code)
 
-         emailConfirmationToken = user.sendActivationEmailCode(activateCode)
+         emailConfirmationToken = JwtService.createToken(
+            { 'auth': 'active account', 'id': user.id },
+            os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15
+         )
+
+         emailData = EmailService.createActivationMailData(user, code)
+
+         EmailService.sendMail(emailData)
 
          return jsonify (
             {
@@ -90,7 +105,18 @@ class UseUserController():
                   user.username = user.username if user.username else userExists[1]
 
                   if user.email != userExists[2]:
-                     token = user.sendEmailCodeToUpdateEmail()
+                     code = randint(10000, 99999) 
+
+                     user.update('verification_code = %s', 'id = %s', code, user.id)
+
+                     token = JwtService.createToken(
+                        { 'auth': 'update email', 'id': user.id, 'email': user.email },
+                        os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15
+                     )
+
+                     emailData = EmailService.createConfirmationMailData(user, code)
+
+                     EmailService.sendMail(emailData)
 
                      resp['userData'] =  { 'emailConfirmationToken': token } 
 
@@ -200,7 +226,18 @@ class UseUserController():
          user.id = userExists[0]
          user.username = userExists[1]
 
-         token = user.sendActivationEmailCode()
+         code = randint(10000, 99999) 
+
+         user.update('verification_code = %s', 'id = %s', code, user.id)
+
+         token = JwtService.createToken(
+            { 'auth': 'active account', 'id': user.id },
+            os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15
+         )
+
+         emailData = EmailService.createActivationMailData(user, code)
+
+         EmailService.sendMail(emailData)
 
          return jsonify(
             { 
@@ -264,7 +301,18 @@ class UseUserController():
 
          user.hashPassword()
 
-         token = user.sendPasswordResetEmailCode()
+         code = randint(10000, 99999) 
+
+         user.update('verification_code = %s', 'id = %s', code, user.id)
+
+         token = JwtService.createToken(
+            { 'auth': 'reset password', 'id': user.id, 'password': user.password },
+            os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15
+         )
+
+         emailData = EmailService.createPasswordResetMailData(user, code)
+
+         EmailService.sendMail(emailData)
 
          return jsonify({
             'state': 'success',

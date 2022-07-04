@@ -3,7 +3,7 @@ from flask import request, jsonify
 
 import os, jwt
 
-from services.JwtProvider import JwtProvider
+from services.JwtService import JwtService
 
 def emailConfirmationMiddleware(f):
    @wraps(f)
@@ -16,7 +16,7 @@ def emailConfirmationMiddleware(f):
             raise Exception('no email confirmation token')
 
          try:
-            payload = JwtProvider.readToken(emailConfirmationToken, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'))
+            payload = JwtService.readToken(emailConfirmationToken, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'))
 
             return f(*args, *kwargs, payload)
 

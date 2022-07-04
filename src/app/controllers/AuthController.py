@@ -1,6 +1,9 @@
 from flask import request, json, jsonify
 
-from services.JwtProvider import JwtProvider
+from services.JwtService import JwtService
+from services.EmailService import EmailService
+
+from random import randint
 
 from dotenv import load_dotenv
 import os
@@ -32,7 +35,18 @@ class UseAuthController():
          user.email = userExists[2]
 
          if not accountActivated:
-            emailConfirmationToken = user.sendActivationEmailCode()
+            code = randint(10000, 99999) 
+         
+            user.update('verification_code = %s', 'id = %s', code, user.id)
+
+            emailConfirmationToken = JwtService.createToken(
+               { 'auth': 'active account', 'id': user.id },
+               os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15
+            )
+
+            emailData = EmailService.createActivationMailData(user, code)
+
+            EmailService.sendMail(emailData)
          
             return jsonify({
                'state': 'error',
@@ -64,8 +78,8 @@ class UseAuthController():
 
          refreshTokenTime = 43200 if user.keepConnected else 1440
 
-         accessToken = JwtProvider.createToken({ 'id': user.id }, os.environ.get('ACCESS_TOKEN_KEY'), 10)
-         refreshToken = JwtProvider.createToken({ 'id': user.id }, os.environ.get('REFRESH_TOKEN_KEY'), refreshTokenTime)
+         accessToken = JwtService.createToken({ 'id': user.id }, os.environ.get('ACCESS_TOKEN_KEY'), 10)
+         refreshToken = JwtService.createToken({ 'id': user.id }, os.environ.get('REFRESH_TOKEN_KEY'), refreshTokenTime)
 
          return accessToken, refreshToken
 
@@ -74,13 +88,12 @@ class UseAuthController():
 
    def restoreAuthentication(self, refreshToken):
       try:
-
-         userId = JwtProvider.readToken(refreshToken, os.environ.get('REFRESH_TOKEN_KEY'))['id']
+         userId = JwtService.readToken(refreshToken, os.environ.get('REFRESH_TOKEN_KEY'))['id']
 
          if userId in sessionIdBlackList:
             raise Exception('the session is not valid')
 
-         newAccessToken = JwtProvider.createToken({ 'id': userId }, os.environ.get('ACCESS_TOKEN_KEY'), 10)
+         newAccessToken = JwtService.createToken({ 'id': userId }, os.environ.get('ACCESS_TOKEN_KEY'), 10)
 
          return newAccessToken
 

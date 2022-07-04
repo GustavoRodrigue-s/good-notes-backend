@@ -3,7 +3,7 @@ from flask import request, jsonify
 
 from app.controllers.AuthController import AuthController, sessionIdBlackList
 
-from services.JwtProvider import JwtProvider
+from services.JwtService import JwtService
 import jwt, os
 
 from dotenv import load_dotenv
@@ -20,7 +20,7 @@ def authMiddleware(f):
       accessToken = request.headers['Authorization'].split(';')[0]
 
       try:
-         data = JwtProvider.readToken(accessToken, os.environ.get('ACCESS_TOKEN_KEY'))
+         data = JwtService.readToken(accessToken, os.environ.get('ACCESS_TOKEN_KEY'))
          userId = data['id']
 
          if userId in sessionIdBlackList:
