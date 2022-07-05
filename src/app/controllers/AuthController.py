@@ -28,45 +28,45 @@ class UseAuthController():
          if hasSomeError:
             return jsonify({ "errors": hasSomeError, "state": "error" }, 401)
 
-         accountActivated = userExists[8]
+         accountIsActivated = userExists[8]
 
          user.id = userExists[0]
          user.username = userExists[1]
          user.email = userExists[2]
 
-         if not accountActivated:
-            code = randint(10000, 99999) 
-         
-            user.update('verification_code = %s', 'id = %s', code, user.id)
+         if accountIsActivated:
+            accessToken, refreshToken = self.createAuthentication(user)
 
-            emailConfirmationToken = JwtService.createToken(
-               { 'auth': 'active account', 'id': user.id },
-               os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15
-            )
-
-            emailData = EmailService.createActivationMailData(user, code)
-
-            EmailService.sendMail(emailData)
-         
             return jsonify({
-               'state': 'error',
-               'reason': 'account not activated',
-               'userData': {
-                  'emailConfirmationToken': emailConfirmationToken,
-                  'sessionEmail': user.email
-               } 
-            }, 301)
+               "state": "success",
+               "reason": "all right",
+               "userData": { 
+                  'accessToken': accessToken,
+                  'refreshToken': refreshToken
+               }
+            }, 200)
 
-         accessToken, refreshToken = self.createAuthentication(user)
+         code = randint(10000, 99999) 
+      
+         user.update('verification_code = %s', 'id = %s', code, user.id)
 
+         emailConfirmationToken = JwtService.createToken(
+            { 'auth': 'active account', 'id': user.id },
+            os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15
+         )
+
+         emailData = EmailService.createActivationMailData(user, code)
+
+         EmailService.sendMail(emailData)
+      
          return jsonify({
-            "state": "success",
-            "reason": "all right",
-            "userData": { 
-               'accessToken': accessToken,
-               'refreshToken': refreshToken
-            }
-         }, 200)
+            'state': 'error',
+            'reason': 'account not activated',
+            'userData': {
+               'emailConfirmationToken': emailConfirmationToken,
+               'sessionEmail': user.email
+            } 
+         }, 301)
 
       except Exception as e:
          return jsonify({ "state": "error", "reason": f'{e}' }, 401)
