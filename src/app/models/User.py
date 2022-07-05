@@ -2,21 +2,13 @@ from database.Database import Database
 
 import os, sys
 
-from random import randint
-from services.JwtProvider import JwtProvider
-
 from cryptocode import encrypt, decrypt
-
-from smtplib import SMTP_SSL
 
 sys.path.insert(1, './')
 
-from emailTemplates.emailConfirmationCode import createEmailConfirmationCodeTemplate
-from email.message import EmailMessage
-
 from dotenv import load_dotenv
 
-from services.PhotoUploader import PhotoUploader
+from services.PhotoService import PhotoService
 
 load_dotenv()
 
@@ -38,9 +30,10 @@ class User:
       userEmailExists = self.findOne('email = %s', self.email)
       userUsernameExists = self.findOne('username = %s', self.username)
 
-      errors = [
-         *self.validateUsernameAndEmail(userEmailExists, userUsernameExists)
-      ]
+      errors = []
+
+      errors.extend(self.validateEmail(userEmailExists))
+      errors.extend(self.validateUsername(userUsernameExists))
 
       if self.password == '' or self.confirmPassword == '':
          errors.append({'input': 'inputsPasswords', "reason": 'empty inputs'})
@@ -75,21 +68,27 @@ class User:
 
       return errors
 
-   def validateUsernameAndEmail(self, userEmailExists, userUsernameExists):
-      
+   def validateUsername(self, userExists):
+
+      errors = []
+
+      if self.username == '':
+         errors.append({'input': 'inputUsername', 'reason': 'empty input'})
+
+      elif userExists:
+         errors.append({'input': 'inputUsername', 'reason': 'username already exists'})
+
+      return errors
+
+   def validateEmail(self, userExists):
+
       errors = []
 
       if self.email == '':
          errors.append({'input': 'inputEmail', 'reason': 'empty input'})
 
-      elif userEmailExists:
+      elif userExists:
          errors.append({'input': 'inputEmail', 'reason': 'email already exists'})
-
-      if self.username == '':
-         errors.append({'input': 'inputUsername', 'reason': 'empty input'})
-
-      elif userUsernameExists:
-         errors.append({'input': 'inputUsername', 'reason': 'username already exists'})
 
       return errors
 
@@ -101,7 +100,7 @@ class User:
       if photoData['size'] > MAXIMUM_PHOTO_SIZE:
          raise Exception('maximum photo size')
 
-   def validateUpdatePassword(self, newPassword):
+   def validatePassword(self, newPassword):
 
       userExists = self.findOne('id = %s', self.id)
       decodedPassword = self.decryptHashPassword(userExists[3])
@@ -135,6 +134,21 @@ class User:
       if code != userExists[7]:
          raise Exception('invalid code')
 
+   def validateForgotPassword(self, userExists):
+
+      errors = []
+
+      if self.password == '':
+         errors.append({ 'input': 'inputPassword', 'reason': 'empty input' })
+
+      if self.email == '':
+         errors.append({ 'input': 'inputEmail', 'reason': 'empty input' })
+
+      elif not userExists:
+         errors.append({ 'input': 'inputEmail', 'reason': 'user not exists' })
+
+      return errors
+
    def findOne(self, where, *value):
 
       query = f'''SELECT * FROM users WHERE {where}'''
@@ -150,11 +164,9 @@ class User:
 
       return user
 
-   def create(self):
+   def create(self, code):
 
       self.hashPassword()
-
-      activateCode = randint(10000, 99999)
 
       query = '''
          INSERT INTO users(id, username, email, password, verification_code, active) 
@@ -164,21 +176,19 @@ class User:
       cursor, connection = Database.connect()
 
       try:
-         cursor.execute(query,  (self.username, self.email, self.password, activateCode))
+         cursor.execute(query,  (self.username, self.email, self.password, code))
 
          self.id = cursor.fetchone()[0]
 
       finally:
          Database.disconnect(cursor, connection)
 
-      return activateCode
-
    def delete(self):
 
       photoId = self.findOne('id = %s', self.id)[5]
 
       if photoId:
-         PhotoUploader.delete(photoId)
+         PhotoService.delete(photoId)
 
       query = '''
          DELETE FROM notes WHERE user_id = %s;
@@ -210,43 +220,11 @@ class User:
       
       existingPhotoId = self.findOne('id = %s', self.id)[5]
 
-      url, id = PhotoUploader.update(photoUrl, existingPhotoId) if existingPhotoId else PhotoUploader.create(photoUrl)
+      url, id = PhotoService.update(photoUrl, existingPhotoId) if existingPhotoId else PhotoService.create(photoUrl)
 
       self.update('photo_url = %s, photo_id = %s', 'id = %s', url, id, self.id)
 
       return url
-
-   def sendEmailCode(self, randomCode = None):
-
-      if not randomCode:
-         activateCode = randint(10000, 99999)  
-
-         self.update('verification_code = %s', 'id = %s', activateCode, self.id)
-
-         randomCode = activateCode
-
-      token = JwtProvider.createToken(self.id, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15)
-
-      msg = EmailMessage()
-
-      msg['Subject'] = "Código de Confirmação - Good Notes"
-      msg['From'] = "Good Notes"
-      msg['To'] = self.email
-
-      msg.add_alternative(
-         createEmailConfirmationCodeTemplate(self.username, randomCode),
-         subtype='html'
-      )
-
-      emailConnection = SMTP_SSL('smtp.gmail.com', 465)
-      emailConnection.login(os.environ.get('EMAIL_ADDRESS'), os.environ.get('EMAIL_PASSWORD'))
-      
-      try:
-         emailConnection.send_message(msg)
-      finally:
-         emailConnection.quit()
-
-      return token
 
    def hashPassword(self):
       hashPassword = encrypt(self.password, os.environ.get('HASH_PASSWORD_KEY'))

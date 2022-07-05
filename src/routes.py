@@ -21,12 +21,21 @@ def createRoutes(app):
 
    @app.route('/activateAccount', methods=['PUT'])
    @emailConfirmationMiddleware
-   def routeCheckEmailConfirmationCode(userId):
-      return UserController.activateAccount(userId)
+   def routeCheckEmailConfirmationCode(userPayload):
+      return UserController.activateAccount(userPayload)
 
-   @app.route('/sendEmailConfirmation', methods=['PUT'])
+   @app.route('/resetPassword', methods=['PUT'])
+   @emailConfirmationMiddleware
+   def routeResetPassword(userPayload):
+      return UserController.resetPassword(userPayload)
+
+   @app.route('/forgotPassword', methods=['PUT'])
+   def routeForgotPassword():
+      return UserController.forgotPassword()
+
+   @app.route('/sendEmailToActivateAccount', methods=['PUT'])
    def routeSendEmailCode():
-      return UserController.sendEmailConfirmation()
+      return UserController.sendEmailToActivateAccount()
 
    @app.route('/logout', methods=['GET'])
    @authMiddleware
@@ -38,31 +47,21 @@ def createRoutes(app):
    def routeTokenRequired(userId):
       return UserController.getStore(userId)
 
-   @app.route('/auth', methods=['GET'])
-   @authMiddleware
-   def routeConfirmActivationCode(userId):
-      return UserController.checkActivationCode(userId)
-
    @app.route('/getProfile', methods=['GET'])
    @authMiddleware
    def routeGetData(userId):
       return UserController.getStore(userId)
 
-   @app.route('/updateCredentials', methods=['PUT'])
+   @app.route('/updateStore', methods=['PUT'])
    @authMiddleware
    def routeUpdateCredentials(userId):
       return UserController.updateStore(userId)
 
-   @app.route('/updateEmail', methods=['PUT'])
+   @app.route('/confirmEmail', methods=['PUT'])
    @authMiddleware
    @emailConfirmationMiddleware
-   def routeUpdateEmail(userId, *values):
-      return UserController.updateEmail(userId)
-
-   @app.route('/updatePassword', methods=['PUT'])
-   @authMiddleware
-   def routeUpdatePassword(userId):
-      return UserController.updatePassword(userId)
+   def routeConfirmEmail(userId, userPayload):
+      return UserController.confirmEmail(userPayload)
 
    @app.route('/uploadPhoto', methods=['POST'])
    @authMiddleware

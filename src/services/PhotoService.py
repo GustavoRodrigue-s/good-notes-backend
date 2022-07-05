@@ -13,7 +13,7 @@ cloudinary.config(
    secure = True
 )
 
-class UsePhotoUploader:
+class UsePhotoService:
    def create(self, url):
 
       photo = cloudinary.uploader.upload(url, folder = "uploads")
@@ -39,4 +39,4 @@ class UsePhotoUploader:
       return resp
 
 
-PhotoUploader = UsePhotoUploader()
+PhotoService = UsePhotoService()

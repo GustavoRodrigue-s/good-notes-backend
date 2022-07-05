@@ -3,7 +3,7 @@ from flask import request, jsonify
 
 import os, jwt
 
-from services.JwtProvider import JwtProvider
+from services.JwtService import JwtService
 
 def emailConfirmationMiddleware(f):
    @wraps(f)
@@ -16,9 +16,9 @@ def emailConfirmationMiddleware(f):
             raise Exception('no email confirmation token')
 
          try:
-            userId = JwtProvider.readToken(emailConfirmationToken, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'))['id']
+            payload = JwtService.readToken(emailConfirmationToken, os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'))
 
-            return f(*args, *kwargs, userId)
+            return f(*args, *kwargs, payload)
 
          except jwt.ExpiredSignatureError:
             raise Exception('email confirmation token expired')

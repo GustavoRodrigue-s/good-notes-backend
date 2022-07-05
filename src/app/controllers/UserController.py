@@ -1,10 +1,18 @@
+from dotenv import load_dotenv
+import os
+
+from random import randint
+
 from flask import request, json, jsonify
+
+from functools import reduce
 
 from app.models.User import User
 
 from app.controllers.AuthController import AuthController
 
-from dotenv import load_dotenv
+from services.JwtService import JwtService
+from services.EmailService import EmailService
 
 load_dotenv()
 
@@ -12,7 +20,7 @@ class UseUserController():
    def store(self):
       try:
          data = json.loads(request.data)
-      
+
          user = User(data)
 
          hasSomeError = user.validateSignUp()
@@ -20,16 +28,25 @@ class UseUserController():
          if hasSomeError:
             return jsonify({ "errors": hasSomeError, "state": "error" }, 401)
 
-         activateCode = user.create()
+         code = randint(10000, 99999) 
+         
+         user.create(code)
 
-         emailConfirmationToken = user.sendEmailCode(activateCode)
+         token = JwtService.createToken(
+            { 'auth': 'active account', 'id': user.id },
+            os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15
+         )
+
+         emailData = EmailService.createActivationMailData(user, code)
+
+         EmailService.sendMail(emailData)
 
          return jsonify (
             {
                "state": "success",
                "reason": "all right",
                "userData": {
-                  'emailConfirmationToken': emailConfirmationToken,
+                  'emailConfirmationToken': token,
                   'sessionEmail': user.email 
                }
             }, 200
@@ -76,68 +93,87 @@ class UseUserController():
          user = User(requestData)
          user.id = userId
 
-         userEmailExists = user.findOne('email = %s AND id <> %s', user.email, user.id)
-         userUsernameExists = user.findOne('username = %s AND id <> %s', user.username, user.id)
+         class AcceptedFields:
+            def email(self):
+               def validate():
+                  userExists = user.findOne('email = %s AND id <> %s', user.email, user.id)
+                  field['errors'] = user.validateEmail(userExists)
 
-         hasSomeError = user.validateUsernameAndEmail(userEmailExists, userUsernameExists)
+               def update():
+                  userExists = user.findOne('id = %s', user.id)
+
+                  user.username = user.username if user.username else userExists[1]
+
+                  if user.email != userExists[2]:
+                     code = randint(10000, 99999) 
+
+                     user.update('verification_code = %s', 'id = %s', code, user.id)
+
+                     token = JwtService.createToken(
+                        { 'auth': 'update email', 'id': user.id, 'email': user.email },
+                        os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15
+                     )
+
+                     emailData = EmailService.createConfirmationMailData(user, code)
+
+                     EmailService.sendMail(emailData)
+
+                     resp['userData'] =  { 'emailConfirmationToken': token } 
+
+               field = { 'errors': [], 'validate': validate, 'update': update }
+
+               return field
+
+            def username(self):
+               def validate():
+                  userExists = user.findOne('username = %s AND id <> %s', user.username, user.id)
+                  field['errors'] = user.validateUsername(userExists)
+
+               def update():
+                  user.update('username = %s', 'id = %s', user.username, user.id)
+
+               field = { 'errors': [], 'validate': validate, 'update': update }    
+
+               return field       
+
+            def password(self):
+               def validate():
+                  field['errors'] = user.validatePassword(requestData['newPassword'])
+
+               def update():
+                  user.password = requestData['newPassword']
+                  user.hashPassword()
+
+                  user.update('password = %s', 'id = %s', user.password, user.id)
+
+               field = { 'errors': [], 'validate': validate , 'update': update }
+
+               return field
+
+         acceptedFields = AcceptedFields()
+         
+         def getField(fieldName):
+            return getattr(acceptedFields, fieldName)()
+
+         fields = list(map(getField, requestData['changedFields']))
+
+         for field in fields:
+            field['validate']()
+
+         hasSomeError = reduce(lambda acc, field: acc + field['errors'], fields, [])
 
          if hasSomeError:
             return jsonify({ 'state': 'error', 'errors': hasSomeError }, 403)
 
-         user.update('username = %s', 'id = %s', user.username, user.id)
-
-         userExists = user.findOne('id = %s', user.id)
-
          resp = { 'state': 'success' }
-         
-         if user.email != userExists[2]:
-            resp['emailConfirmationToken'] = user.sendEmailCode()
+
+         for field in fields:
+            field['update']()
 
          return jsonify(resp, 200)
 
       except Exception as e:
          return jsonify({ "state": "error", 'reason': f'{e}' }, 401)
-
-   def updateEmail(self, userId):
-      try:
-         requestData = json.loads(request.data)
-
-         emailConfirmationCode = requestData['emailConfirmationCode']
-         newEmail = requestData['newEmail']
-         
-         user = User({ 'email': newEmail })
-         user.id = userId
-
-         user.validateEmailConfirmationCode(emailConfirmationCode)
-
-         user.update('email = %s', 'id = %s', user.email, user.id)
-
-         return jsonify({ 'state': 'success' }, 200)
-
-      except Exception as e:
-         return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
-
-   def updatePassword(self, userId):
-      try:
-         requestData = json.loads(request.data)
-
-         user = User({ 'password': requestData['oldPassword'] })
-         user.id = userId
-
-         hasSomeError = user.validateUpdatePassword(requestData['newPassword'])
-
-         if hasSomeError:
-            return jsonify({ 'errors': hasSomeError, 'state': 'error' }, 401)
-
-         user.password = requestData['newPassword']
-         user.hashPassword()
-
-         user.update('password = %s', 'id = %s', user.password, user.id)
-
-         return jsonify({ 'state': 'success' }, 200)
-
-      except Exception as e:
-         return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 
    def uploadPhoto(self, userId):
       try:
@@ -155,13 +191,32 @@ class UseUserController():
       except Exception as e:
          return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 
-   def sendEmailConfirmation(self):
+   def confirmEmail(self, token):
+      try:
+         if token['auth'] != 'update email':
+            raise Exception('token not authorized')
+
+         requestData = json.loads(request.data)
+
+         emailConfirmationCode = requestData['emailConfirmationCode']
+         
+         user = User(token)
+         user.id = token['id']
+
+         user.validateEmailConfirmationCode(emailConfirmationCode)
+
+         user.update('email = %s', 'id = %s', user.email, user.id)
+
+         return jsonify({ 'state': 'success' }, 200)
+
+      except Exception as e:
+         return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
+
+   def sendActivateAccountEmail(self):
       try:
          requestData = json.loads(request.data)
 
-         email = requestData['email'] 
-
-         user = User({ 'email': email })
+         user = User(requestData)
          
          userExists = user.findOne('email = %s', user.email)
 
@@ -170,15 +225,25 @@ class UseUserController():
 
          user.id = userExists[0]
          user.username = userExists[1]
-         user.email = requestData['emailToUpdate'] if 'emailToUpdate' in requestData else user.email
 
-         emailConfirmationToken = user.sendEmailCode()
+         code = randint(10000, 99999) 
+
+         user.update('verification_code = %s', 'id = %s', code, user.id)
+
+         token = JwtService.createToken(
+            { 'auth': 'active account', 'id': user.id },
+            os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15
+         )
+
+         emailData = EmailService.createActivationMailData(user, code)
+
+         EmailService.sendMail(emailData)
 
          return jsonify(
             { 
                'state': 'success',
                'userData': { 
-                  'emailConfirmationToken': emailConfirmationToken 
+                  'emailConfirmationToken': token 
                } 
             }, 200
          )
@@ -186,15 +251,18 @@ class UseUserController():
       except Exception as e:
          return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
 
-   def activateAccount(self, userId):
+   def activateAccount(self, token):
       try:
+         if token['auth'] != 'active account':
+            raise Exception('token not authorized')
+
          requestData = json.loads(request.data)
 
          emailConfirmationCode = requestData['emailConfirmationCode']
          sessionConnected = requestData['keepConnected']
 
          user = User({ 'keepConnected': sessionConnected })
-         user.id = userId
+         user.id = token['id']
 
          user.validateEmailConfirmationCode(emailConfirmationCode)
 
@@ -211,6 +279,66 @@ class UseUserController():
                }
             }, 200
          )
+
+      except Exception as e:
+         return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
+
+   def forgotPassword(self):
+      try:
+         credentials = json.loads(request.data)
+
+         user = User(credentials)
+
+         userExists = user.findOne('email = %s', user.email)
+
+         hasSomeError = user.validateForgotPassword(userExists)
+
+         if hasSomeError:
+            return jsonify({ "errors": hasSomeError, "state": "error" }, 401)
+
+         user.id = userExists[0]
+         user.username = userExists[1]
+
+         user.hashPassword()
+
+         code = randint(10000, 99999) 
+
+         user.update('verification_code = %s', 'id = %s', code, user.id)
+
+         token = JwtService.createToken(
+            { 'auth': 'reset password', 'id': user.id, 'password': user.password },
+            os.environ.get('EMAIL_CONFIRMATION_TOKEN_KEY'), 15
+         )
+
+         emailData = EmailService.createPasswordResetMailData(user, code)
+
+         EmailService.sendMail(emailData)
+
+         return jsonify({
+            'state': 'success',
+            'userData': {
+               'emailConfirmationToken': token
+            } 
+         }, 200)
+
+      except Exception as e:
+         return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
+
+   def resetPassword(self, token):
+      try:
+         if token['auth'] != 'reset password':
+            raise Exception('token not authorized')
+
+         emailConfirmationCode = json.loads(request.data)['emailConfirmationCode']
+
+         user = User(token)
+         user.id = token['id']
+
+         user.validateEmailConfirmationCode(emailConfirmationCode)
+
+         user.update('password = %s', 'id = %s', user.password, user.id)
+
+         return jsonify({ 'state': 'success' }, 200)
 
       except Exception as e:
          return jsonify({ 'state': 'error', 'reason': f'{e}' }, 401)
