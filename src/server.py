@@ -10,7 +10,17 @@ from routes import createRoutes
 
 # API config 
 app = Flask(__name__)
-cors = CORS(app)
+
+# Cors Config
+
+ALLOWED_UIs = {
+   'origins': ['http://localhost:5501', 'https://good-notes-app.herokuapp.com/']
+} 
+
+cors = CORS(app, resources={
+   r'/*': ALLOWED_UIs
+})
+
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 Database.createTables()
