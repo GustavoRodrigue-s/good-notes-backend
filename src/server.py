@@ -14,7 +14,7 @@ app = Flask(__name__)
 # Cors Config
 
 ALLOWED_UIs = {
-   'origins': ['http://localhost:5501', 'https://good-notes-app.herokuapp.com/']
+   'origins': ['http://localhost:5501', 'https://good-notes-app.herokuapp.com']
 } 
 
 cors = CORS(app, resources={
