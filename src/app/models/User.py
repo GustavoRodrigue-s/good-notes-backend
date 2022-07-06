@@ -1,6 +1,6 @@
 from database.Database import Database
 
-import os, sys
+import os, sys, re
 
 from cryptocode import encrypt, decrypt
 
@@ -84,8 +84,14 @@ class User:
 
       errors = []
 
+      emailValidation = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+') 
+      isValidEmail = re.fullmatch(emailValidation, self.email)
+
       if self.email == '':
          errors.append({'input': 'inputEmail', 'reason': 'empty input'})
+
+      elif not isValidEmail:
+         errors.append({'input': 'inputEmail', 'reason': 'invalid email'})
 
       elif userExists:
          errors.append({'input': 'inputEmail', 'reason': 'email already exists'})
@@ -138,14 +144,13 @@ class User:
 
       errors = []
 
+      errors.extend(self.validateEmail(None))
+
+      if not errors and not userExists:
+         errors.append({ 'input': 'inputEmail', 'reason': 'user not exists' })
+
       if self.password == '':
          errors.append({ 'input': 'inputPassword', 'reason': 'empty input' })
-
-      if self.email == '':
-         errors.append({ 'input': 'inputEmail', 'reason': 'empty input' })
-
-      elif not userExists:
-         errors.append({ 'input': 'inputEmail', 'reason': 'user not exists' })
 
       return errors
 
