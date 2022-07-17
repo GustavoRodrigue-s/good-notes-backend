@@ -35,7 +35,7 @@ def createRoutes(app):
 
    @app.route('/sendEmailToActivateAccount', methods=['PUT'])
    def routeSendEmailCode():
-      return UserController.sendEmailToActivateAccount()
+      return UserController.sendActivateAccountEmail()
 
    @app.route('/logout', methods=['GET'])
    @authMiddleware
