@@ -14,7 +14,7 @@ class UseEmailService:
          <tbody style="text-align: center; color: #646369; font-size: 20px;">
             <tr>
                <td style="font: 700 35px sans-serif; color: #0066FF; padding-bottom: 15px;">
-                  good <span style="color: #000;">notes</span>
+                  good notes
                </td>
             </tr>
             <tr>
