@@ -12,12 +12,9 @@ class UseEmailService:
       return f"""
       <table align="center" style="width: 100%; max-width: 500px; padding: 30px 20px; border: 1px solid #c5c5c5; border-radius: 10px;">
          <tbody style="text-align: center; color: #646369; font-size: 20px;">
-            <tr style="padding-bottom: 15px;">
-               <td style="font: 700 35px sans-serif; color: #0066FF;">
-                  good
-               </td>
-               <td style="font: 700 35px sans-serif; color: #000;">
-                  notes
+            <tr>
+               <td style="font: 700 35px sans-serif; color: #0066FF; padding-bottom: 15px;">
+                  good <span style="color: #000;">notes</span>
                </td>
             </tr>
             <tr>
