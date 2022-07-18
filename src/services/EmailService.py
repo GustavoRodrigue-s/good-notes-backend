@@ -12,9 +12,12 @@ class UseEmailService:
       return f"""
       <table align="center" style="width: 100%; max-width: 500px; padding: 30px 20px; border: 1px solid #c5c5c5; border-radius: 10px;">
          <tbody style="text-align: center; color: #646369; font-size: 20px;">
-            <tr>
-               <td style="font: 700 35px sans-serif; color: #0066FF; padding-bottom: 15px;">
-                  Good Notes
+            <tr style="padding-bottom: 15px;">
+               <td style="font: 700 35px sans-serif; color: #0066FF;">
+                  good
+               </td>
+               <td style="font: 700 35px sans-serif; color: #000;">
+                  notes
                </td>
             </tr>
             <tr>
@@ -62,7 +65,7 @@ class UseEmailService:
             <tr>
                <td style="font-size: 15px; padding-top: 10px;">
                   Atenciosamente
-                  <a style="color: #0066FF;" href="https://good-notes-app.herokuapp.com/">Good Notes.</a>
+                  <a style="color: #0066FF;" href="https://good-notes-app.herokuapp.com/">good notes.</a>
                </td>
             </tr>
          </tbody>
@@ -75,7 +78,7 @@ class UseEmailService:
          'name': user.username,
          'code': code,
          'subject': 'Código para Ativar Conta',
-         'title': 'Seja bem-vindo ao Good Notes.',
+         'title': 'Seja bem-vindo ao good notes.',
          'subtitle': 'O código para ativar a sua conta é:'
       }
 
@@ -103,8 +106,8 @@ class UseEmailService:
 
       msg = EmailMessage()
 
-      msg['Subject'] = f"{mailData['subject']} - Good Notes"
-      msg['From'] = "Good Notes"
+      msg['Subject'] = f"{mailData['subject']} - good notes"
+      msg['From'] = "good notes"
       msg['To'] = mailData['to']
 
       mailTemplate = self.createMailTemplate(mailData)
